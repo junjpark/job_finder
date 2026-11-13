@@ -133,16 +133,45 @@ def software_ok(j):
                 time.sleep(2)
                 text = get_text(detail_url(j))
         except Exception:  # shortcut: an unreadable description passes, so a flaky page never hides a job
-            return True
+            return not j.get("check_level")
     text = re.sub(r"(?is)<(script|style|noscript)\b(?![^>]*ld\+json)[^>]*>.*?</\1>", " ", text)  # page code, not the job
     text = re.sub(r"<[^>]+>", " ", html.unescape(text))
     if len(text.strip()) < 500:  # shortcut: a page with no description text (a JavaScript app) passes
-        return True
-    return len({m.lower() for m in SOFTWARE_TERMS.findall(text)}) >= MIN_SOFTWARE_TERMS
+        return not j.get("check_level")
+    return (len({m.lower() for m in SOFTWARE_TERMS.findall(text)}) >= MIN_SOFTWARE_TERMS
+            and (not j.get("check_level") or entry_level(text)))
+
+
+NUMBER_WORDS = {w: i for i, w in enumerate("zero one two three four five six seven eight nine ten".split())}
+YEARS_EXPERIENCE = re.compile(  # "3+ years of professional software experience", "0-2 years experience", "two years' experience"
+    r"(?<![\d.])(\d{1,2}|zero|one|two|three|four|five|six|seven|eight|nine|ten)\s*(?:\+|plus)?\s*"
+    r"(?:(?:-|–|—|to|or)\s*(?:\d{1,2}|zero|one|two|three|four|five|six|seven|eight|nine|ten)\s*\+?\s*)?"
+    r"(?:or more\s+)?years?['’]?s?\s+(?:of\s+)?(?:[\w/&,.+#-]+\s+){0,6}?experience", re.I)
+ENTRY_WORDS = re.compile(
+    r"new ?grad|recent(?:ly)? grad|entry[- ]level|early[- ]career|(?:university|college) grad|graduating (?:in|by|between)"
+    r"|class of 20\d\d|no (?:prior |professional )?experience (?:is )?(?:required|necessary)", re.I)
+
+
+def entry_level(text):
+    """For titles with no level in them: every years-of-experience ask is under 2, and the posting asks for some
+    experience under 2 years or says new grad or entry level. Conservative: "5+ years preferred" anywhere rejects it."""
+    years = [int(NUMBER_WORDS.get(y.lower(), y)) for y in YEARS_EXPERIENCE.findall(text)]
+    return not any(y >= 2 for y in years) and bool(years or ENTRY_WORDS.search(text))
 
 
 def title_ok(title):
     return bool(LEVEL_POS.search(title) and DOMAIN.search(title) and not LEVEL_NEG.search(title))
+
+
+SOFTWARE_TITLE = re.compile(
+    r"software|developer|programmer|full[- ]?stack|back-?end|front-?end|\bsde\b|\bswe\b|data scientist|site reliability"
+    r"|(?:machine learning|\bml\b|\bai\b|data|platform|cloud|devops|mobile|\bios\b|android|game(?:play)?|web"
+    r"|infrastructure|\bsre\b|applied) engineer", re.I)
+
+
+def title_unleveled(title):
+    """A software title with no level in it, like "Full Stack Software Engineer": kept only if its description is entry level."""
+    return bool(SOFTWARE_TITLE.search(title) and not LEVEL_POS.search(title) and not LEVEL_NEG.search(title))
 
 
 STATE_CODES = ("AL AK AZ AR CA CO CT DE FL GA HI ID IL IN IA KS KY LA ME MD MA MI MN MS MO MT NE NV NH "
@@ -725,7 +754,10 @@ def tick(db, boards, emit_existing=False):
             db.executemany("INSERT OR IGNORE INTO seen VALUES (?, ?)", [(j["key"], int(time.time())) for j in fresh])
             if jobs:  # an empty answer may be an outage page, so it doesn't count as the first check
                 db.execute("INSERT OR IGNORE INTO seeded VALUES (?)", (board["key"],))
-            new_matches += [j for j in fresh if title_ok(j["title"]) and j["us"] != "non-us" and is_recent(j["published"])
+            for j in fresh:
+                j["check_level"] = not title_ok(j["title"]) and title_unleveled(j["title"])
+            new_matches += [j for j in fresh if (title_ok(j["title"]) or j["check_level"]) and j["us"] != "non-us"
+                            and is_recent(j["published"])
                             and (not first_poll or emit_existing or age_days(j["published"]) is not None)]
     now = time.strftime("%Y-%m-%d %H:%M")
     since = time.strftime("%Y-%m-%d %H:%M", time.localtime(time.time() - REPOST_WINDOW_DAYS * 86400))
@@ -947,6 +979,12 @@ def selftest():
         assert title_ok(t), f"should match: {t}"
     for t in no:
         assert not title_ok(t), f"should not match: {t}"
+    assert [title_unleveled(t) for t in ("Full Stack Software Engineer", "Data Engineer", "Software Engineer I",
+            "Senior Backend Engineer", "Mechanical Engineer")] == [True, True, False, False, False]
+    assert entry_level("0-2 years of experience with Java.") and entry_level("Open to new grads.")
+    assert entry_level("At least 1 year of hands-on experience.") and entry_level("Two years' experience.") is False
+    assert not entry_level("3+ years of professional software engineering experience") and not entry_level("BS in CS.")
+    assert not entry_level("1+ year of React experience; 5+ years experience preferred.")
     us = ["San Francisco, CA", "Remote - US", "US, WA, Remote", "Seattle, San Francisco, New York City",
           "Sunnyvale-California-United-States-of-America", "Beavercreek-OH", "New York, New York"]
     non = ["London, United Kingdom", "Bengaluru, Karnataka", "Toronto, Ontario", "Singapore, Singapore",
