@@ -102,7 +102,7 @@
     <text x="846" y="476">read replies</text><text x="846" y="500" font-size="15">(long-poll SQS)</text>
     <text x="372" y="300" font-size="15">boards</text><text x="372" y="318" font-size="15">to check</text>
 
-    <text x="1166" y="262">SNS topic</text><text x="1166" y="286" font-size="15">hourly report</text>
+    <text x="1166" y="262">SNS topic</text><text x="1166" y="286" font-size="15">email 30m · text 1h</text>
     <text x="1166" y="410">google sheet</text><text x="1166" y="434" font-size="15">"Job Finder" tab</text><text x="1166" y="454" font-size="15">status · resumes</text>
     <text x="1074" y="266" font-size="15" transform="rotate(-14 1074 266)">new roles</text>
     <text x="1080" y="428" font-size="15" transform="rotate(10 1080 428)">sync</text>

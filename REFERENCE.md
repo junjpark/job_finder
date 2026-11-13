@@ -26,7 +26,7 @@ Facts about `finder.py`, its files, and its deployment, as of Nov 13, 2026. For 
 | `MIN_SOFTWARE_TERMS` | `2` | Fewest software tools or requirements the job description must name. |
 | `MAX_AGE_DAYS` | `1` | Oldest posting age the finder reports. For Workday, `1` allows "Posted Today" and "Posted Yesterday". |
 | `REPOST_WINDOW_DAYS` | `90` | The finder skips a role whose company and title it reported within this many days. |
-| `REPORT_EVERY_SECONDS` | `3600` | Shortest time between two reports. The finder stores the last report time in the `meta` table, so restarts keep it. |
+| `REPORT_EVERY_SECONDS` | `{"email": 1800, "sms": 3600}` | Shortest time between two reports of each kind. The finder stores each last report time in the `meta` table, so restarts keep it. |
 | `PROBE_PER_DAY` | `500` | Most board-name guesses the daily rebuild re-checks. It re-checks the oldest first. |
 | `WORKDAY_UNSORTED` | `{"xboxgaming.wd1.myworkdayjobs.com"}` | Workday hosts whose lists are not newest first. The finder reads all of their pages. |
 
@@ -99,8 +99,8 @@ A `#` starts a comment. The finder skips blank lines.
 | --- | --- | --- |
 | `seen` | `key`, `first_seen` | Every job the finder has seen. `key` is `<board key>#<job id>`. |
 | `seeded` | `board` | Every board that has returned at least one job. |
-| `meta` | `name`, `value` | Values that survive restarts. `last_report` is the time of the last report. |
-| `roles` | `id`, `key`, `found_at`, `company`, `title`, `location`, `pay`, `ats`, `url`, `published`, `priority`, `listings`, `status`, `picked_at`, `reported`, `sheet_state`, `resumes` | Every reported role. `id` is the number in texts and emails. `status` is `new`, `picked`, `resumes ready`, or `ineligible`. `resumes` holds the resume result. `reported` is `1` after a report includes the role. `sheet_state` is `add`, `update`, or `ok`. |
+| `meta` | `name`, `value` | Values that survive restarts. `last_email` and `last_sms` are the times of the last email and text report. |
+| `roles` | `id`, `key`, `found_at`, `company`, `title`, `location`, `pay`, `ats`, `url`, `published`, `priority`, `listings`, `status`, `picked_at`, `reported`, `texted`, `sheet_state`, `resumes` | Every reported role. `id` is the number in texts and emails. `status` is `new`, `picked`, `resumes ready`, or `ineligible`. `resumes` holds the resume result. `reported` is `1` after an email report includes the role, and `texted` after a text report does. `sheet_state` is `add`, `update`, or `ok`. |
 
 ## Messages
 
@@ -111,6 +111,8 @@ A `#` starts a comment. The finder skips blank lines.
 | Reply | Any text from `MY_PHONE`. The finder reads every number in it as a role number. |
 | Confirmation | `JobFinder: Picked for resumes: #<id> <company>, ...` and `. Not found: #<id>` for numbers with no role. |
 | Reply with no numbers | `JobFinder: Reply with role numbers, like 214 219. Reply STOP to opt out.` |
+
+Every message carries the SNS message attribute `to`: `email` for report emails, `sms` for report texts, and `all` for confirmations. Each subscription's filter policy picks which ones it gets.
 
 ## Tracker sheet columns
 
@@ -127,7 +129,7 @@ All resources are in `us-east-1`.
 | Lightsail instance | `job-finder-server` | `micro_3_0` plan, $7 a month, Ubuntu 24.04, a public IPv4 address. Inbound port 22 only. |
 | Lightsail key pair | `job-finder` | Private key at `~/.ssh/job-finder-lightsail` on your Mac. |
 | systemd service | `job-finder` | Runs `/home/ubuntu/venv/bin/python -u finder.py` in `/home/ubuntu/job_finder`. Restarts 30 seconds after a crash. |
-| SNS topic | `job-finder` | Reports. Email subscription to your address, confirmed. |
+| SNS topic | `job-finder` | Reports. Email subscription to your address, confirmed, with filter policy `{"to": ["email", "all"]}`. |
 | SNS topic | `job-replies` | Receives inbound texts. |
 | SQS queue | `job-replies` | Subscribed to `job-replies` with raw message delivery. Keeps messages for 14 days. |
 | IAM user | `job-finder` | `sns:Publish` on `job-finder`, and `sqs:ReceiveMessage` and `sqs:DeleteMessage` on `job-replies`. Access key in `~/.aws/credentials` on the server. |

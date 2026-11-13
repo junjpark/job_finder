@@ -38,7 +38,7 @@ If the newest `checked` line is more than 10 minutes old, restart the finder. Th
 
 ## Read a report
 
-The finder sends a report at most once an hour, and only when it found a new role. A role counts as new when its job board says it went up in the last 24 hours.
+The finder emails a report at most every 30 minutes and texts one at most once an hour, and only when it found a new role. Each lists the roles found since the last report of its kind. A role counts as new when its job board says it went up in the last 24 hours.
 
 - The email lists every new role with its number, company, title, location, pay, and link. Roles from companies in `extra_companies.txt` come first.
 - The text is a one-line summary, such as `JobFinder: 3 new roles #214-216 (2 full-time, 1 intern). Notable: Riot Games, Epic Games, Beli. Reply #s for resumes, STOP to end.`
@@ -93,7 +93,7 @@ To see every company the finder checks, open `all_companies.txt`. The finder rew
 1. In `finder.py`, change `MAX_AGE_DAYS`. The value `1` means the last 24 hours. For Workday boards, `1` means "Posted Today" or "Posted Yesterday".
 2. Deploy the change. The steps are in [Deploy a code change](#deploy-a-code-change).
 
-To change how often reports go out, change `REPORT_EVERY_SECONDS` the same way. To change how long a repeat of the same company and title stays hidden, change `REPOST_WINDOW_DAYS`.
+To change how often reports go out, change `REPORT_EVERY_SECONDS` the same way. Keep texts at 3600 or more, because the SMS registration promises at most one an hour. To change how long a repeat of the same company and title stays hidden, change `REPOST_WINDOW_DAYS`.
 
 ## Deploy a code change
 

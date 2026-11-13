@@ -21,7 +21,7 @@ the `job-finder` user and its access key on the server, and a toll-free number w
 texting. The number waits on its registration. Your phone gets added once AWS approves it.
 
 1. **Phone number.** In *AWS End User Messaging SMS*, request a **US toll-free number** with SMS and **two-way messaging** turned on (about $2/month). Submit its toll-free registration and wait for approval. Nothing can be texted until it's approved.
-2. **Report topic.** In *SNS*, create a standard topic `job-finder`. Add two subscriptions: **SMS** to your phone and **Email** to your address (click the confirmation link it emails you).
+2. **Report topic.** In *SNS*, create a standard topic `job-finder`. Add two subscriptions: **SMS** to your phone and **Email** to your address (click the confirmation link it emails you). Give each one a subscription filter policy on message attributes, or your phone also gets the 30-minute email reports: `{"to": ["sms", "all"]}` for SMS and `{"to": ["email", "all"]}` for email.
 3. **Reply topic and queue.** Create a second SNS topic `job-replies` (it must be separate from `job-finder`), and an *SQS* standard queue `job-replies` subscribed to it. On the phone number's two-way settings, set the destination to the `job-replies` topic.
 4. **Access key for the server.** In *IAM*, create a user `job-finder` with only this policy, then create an access key for it and run `aws configure` on the server (or put it in `~/.aws/credentials`):
 
@@ -70,7 +70,7 @@ sudo systemctl enable --now job-finder
 journalctl -u job-finder -f    # watch it work
 ```
 
-The first run reads every board once to record what's already open (about 10 minutes, no reports). After that you get at most one report an hour, and only when something new turns up.
+The first run reads every board once to record what's already open (about 10 minutes, no reports). After that you get an email at most every 30 minutes and a text at most once an hour, and only when something new turns up.
 
 ## Picking roles
 

@@ -16,8 +16,9 @@ Usage:
 
 Every role that passes the filters gets a number (#214) and is stored in state.db.
 Optional features, each turned on by environment variables (pip install boto3 gspread):
-  Reports    SNS_TOPIC_ARN    At most once an hour, only when something new was found. Phone
-                              subscribers get a short text, email subscribers the full list.
+  Reports    SNS_TOPIC_ARN    Only when something new was found: the full list by email at most every
+                              30 minutes, a short text at most once an hour. Each subscription needs
+                              a filter policy on the "to" attribute (see SETUP.md).
   Replies    REPLY_QUEUE_URL  Text back role numbers ("214 219") to pick them for resumes.
              MY_PHONE         Only texts from this number are accepted.
   Tracker    GOOGLE_SHEET_ID  Every role and its status go to this sheet; columns K-M are yours.
@@ -47,7 +48,7 @@ WORKERS = 16
 MAX_AGE_DAYS = 1
 MIN_SOFTWARE_TERMS = 2
 REPOST_WINDOW_DAYS = 90
-REPORT_EVERY_SECONDS = 3600
+REPORT_EVERY_SECONDS = {"email": 1800, "sms": 3600}  # the SMS registration promises at most one text an hour
 PROBE_PER_DAY = 500
 SNS_TOPIC_ARN = os.environ.get("SNS_TOPIC_ARN")
 REPLY_QUEUE_URL = os.environ.get("REPLY_QUEUE_URL")
@@ -688,8 +689,13 @@ def open_db(path=DB):
         location TEXT, pay TEXT, ats TEXT, url TEXT, published TEXT, priority INTEGER, listings INTEGER,
         status TEXT DEFAULT 'new', picked_at TEXT, reported INTEGER DEFAULT 0, sheet_state TEXT DEFAULT 'add')""")
     db.execute("CREATE TABLE IF NOT EXISTS meta (name TEXT PRIMARY KEY, value REAL)")
-    if "resumes" not in [c[1] for c in db.execute("PRAGMA table_info(roles)")]:  # added after the first deploy
+    cols = [c[1] for c in db.execute("PRAGMA table_info(roles)")]
+    if "resumes" not in cols:  # added after the first deploy
         db.execute("ALTER TABLE roles ADD COLUMN resumes TEXT")
+    if "texted" not in cols:  # texts split from email reports; roles already reported count as texted
+        db.execute("ALTER TABLE roles ADD COLUMN texted INTEGER DEFAULT 0")
+        db.execute("UPDATE roles SET texted=reported")
+        db.commit()
     return db
 
 
@@ -772,25 +778,26 @@ def report_email(roles):
     return report_text(roles) + sheet + "\n\n" + "\n\n".join(rows)
 
 
-def sns_publish(**kwargs):
+def sns_publish(to, **kwargs):  # to: "email", "sms" or "all", matched by each subscription's filter policy
     try:
         import boto3
-        boto3.client("sns", region_name=SNS_TOPIC_ARN.split(":")[3]).publish(TopicArn=SNS_TOPIC_ARN, **kwargs)
+        boto3.client("sns", region_name=SNS_TOPIC_ARN.split(":")[3]).publish(
+            TopicArn=SNS_TOPIC_ARN, MessageAttributes={"to": {"DataType": "String", "StringValue": to}}, **kwargs)
         return True
     except Exception as e:
         print(f"SNS publish failed: {e}", file=sys.stderr)
         return False
 
 
-def send_report(db):
-    roles = [dict(zip(ROLE_COLS, r)) for r in db.execute(f"SELECT {','.join(ROLE_COLS)} FROM roles WHERE reported=0")]
+def send_report(db, to):
+    col = "reported" if to == "email" else "texted"
+    roles = [dict(zip(ROLE_COLS, r)) for r in db.execute(f"SELECT {','.join(ROLE_COLS)} FROM roles WHERE {col}=0")]
     if not roles:
         return False
     short = report_text(roles)
-    sent = sns_publish(Subject=short.split(" (")[0][:100], MessageStructure="json",
-                       Message=json.dumps({"default": short, "sms": short, "email": report_email(roles)}))
+    sent = sns_publish(to, Subject=short.split(" (")[0][:100], Message=report_email(roles) if to == "email" else short)
     if sent:
-        db.executemany("UPDATE roles SET reported=1 WHERE id=?", [(r["id"],) for r in roles])
+        db.executemany(f"UPDATE roles SET {col}=1 WHERE id=?", [(r["id"],) for r in roles])
         db.commit()
     return sent
 
@@ -828,7 +835,7 @@ def check_replies(db, wait):
             try:
                 sender, text = parse_reply(m["Body"])
                 if sender == MY_PHONE:
-                    sns_publish(Message=pick(db, text))
+                    sns_publish("all", Message=pick(db, text))
             except Exception as e:  # an unreadable reply must not block the ones behind it
                 print(f"skipped a reply: {e}", file=sys.stderr)
             sqs.delete_message(QueueUrl=REPLY_QUEUE_URL, ReceiptHandle=m["ReceiptHandle"])
@@ -895,7 +902,8 @@ def main(args):
         mark(db, int(args[1]), args[2], args[3] if len(args) > 3 else "")
         return sync_sheet(db)
     limit = int(args[args.index("--limit") + 1]) if "--limit" in args else None
-    last_report = (db.execute("SELECT value FROM meta WHERE name='last_report'").fetchone() or [0.0])[0]
+    last = {to: (db.execute("SELECT value FROM meta WHERE name=?", (f"last_{to}",)).fetchone() or [0.0])[0]
+            for to in REPORT_EVERY_SECONDS}
     while True:
         boards = load_watchlist()[:limit]
         priority, rest = boards[:PRIORITY_COUNT], boards[PRIORITY_COUNT:]
@@ -905,10 +913,10 @@ def main(args):
             batch = boards
         start = time.time()
         tick(db, batch, emit_existing="--emit-existing" in args)
-        if SNS_TOPIC_ARN and (time.time() - last_report >= REPORT_EVERY_SECONDS or "--once" in args):
-            if send_report(db):
-                last_report = time.time()
-                db.execute("INSERT OR REPLACE INTO meta VALUES ('last_report', ?)", (last_report,))
+        for to, every in REPORT_EVERY_SECONDS.items():
+            if SNS_TOPIC_ARN and (time.time() - last[to] >= every or "--once" in args) and send_report(db, to):
+                last[to] = time.time()
+                db.execute("INSERT OR REPLACE INTO meta VALUES (?, ?)", (f"last_{to}", last[to]))
                 db.commit()
         sync_sheet(db)
         if "--once" in args:
@@ -1036,6 +1044,15 @@ def selftest_tick():
     assert first == ["acme: Data Science Intern"], first
     assert second == ["acme: Software Engineer, New Grad"], second
     del FETCHERS["fake"]
+    # email and texts each report every role once, on their own schedule
+    global sns_publish
+    real, sent = sns_publish, []
+    sns_publish = lambda to, **kw: sent.append(to) or True
+    try:
+        assert send_report(db, "email") and not send_report(db, "email")
+        assert send_report(db, "sms") and not send_report(db, "sms") and sent == ["email", "sms"], sent
+    finally:
+        sns_publish = real
 
 
 if __name__ == "__main__":

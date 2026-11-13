@@ -31,7 +31,7 @@ One check reads about 500 boards with 16 threads and takes about a minute. Most 
 every 5 minutes
   load_watchlist()   rebuild once a day
   tick()             fetch ~500 boards in parallel, filter, store new roles
-  send_report()      at most once an hour, through SNS
+  send_report()      email every 30 min, text every hour, through SNS
   sync_sheet()       only if GOOGLE_SHEET_ID is set
   check_replies()    long-poll the SQS queue until the next tick
 ```
