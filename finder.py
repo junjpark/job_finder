@@ -54,6 +54,7 @@ REPLY_QUEUE_URL = os.environ.get("REPLY_QUEUE_URL")
 MY_PHONE = os.environ.get("MY_PHONE")                # replies are only accepted from this number, e.g. +12065550123
 GOOGLE_SHEET_ID = os.environ.get("GOOGLE_SHEET_ID")
 GOOGLE_CREDENTIALS = os.environ.get("GOOGLE_CREDENTIALS", str(HERE / "google_service_account.json"))
+GOOGLE_SHEET_TAB = os.environ.get("GOOGLE_SHEET_TAB", "Job Finder")  # its own tab, so a shared tracker's tabs stay untouched
 UA = {"User-Agent": "job-board-watcher/0.1"}
 
 LEVEL_POS = re.compile(
@@ -851,7 +852,11 @@ def sync_sheet(db):
         return
     try:
         import gspread
-        ws = gspread.service_account(filename=GOOGLE_CREDENTIALS).open_by_key(GOOGLE_SHEET_ID).sheet1
+        book = gspread.service_account(filename=GOOGLE_CREDENTIALS).open_by_key(GOOGLE_SHEET_ID)
+        try:
+            ws = book.worksheet(GOOGLE_SHEET_TAB)
+        except gspread.WorksheetNotFound:
+            ws = book.add_worksheet(GOOGLE_SHEET_TAB, rows=1000, cols=len(SHEET_HEADER))
         if not ws.acell("A1").value:
             ws.update(values=[SHEET_HEADER], range_name="A1")
         adds = db.execute("SELECT id, found_at, company, title, location, pay, ats, url, status, picked_at, resumes"

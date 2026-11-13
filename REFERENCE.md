@@ -41,6 +41,7 @@ Each feature stays off until you set its variables. The server's values live in 
 | `MY_PHONE` | Replies | Your phone in E.164 form, such as `+1XXXXXXXXXX`. The finder ignores replies from other numbers. |
 | `GOOGLE_SHEET_ID` | Tracker sheet | Not set |
 | `GOOGLE_CREDENTIALS` | Tracker sheet | Not set. Defaults to `google_service_account.json` next to `finder.py`. |
+| `GOOGLE_SHEET_TAB` | Tracker sheet | Not set. Defaults to `Job Finder`. The finder writes only to this tab and creates it if it is missing, so it can share a spreadsheet with your own tabs. |
 
 Reports and replies need `boto3`. The sheet needs `gspread`. The server has both in `/home/ubuntu/venv`.
 
