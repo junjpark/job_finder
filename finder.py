@@ -872,8 +872,14 @@ def sync_sheet(db):
             ws.update(values=[SHEET_HEADER], range_name="A1")
         adds = db.execute("SELECT id, found_at, company, title, location, pay, ats, url, status, picked_at, resumes"
                           " FROM roles WHERE sheet_state='add' ORDER BY id").fetchall()
-        if adds:  # RAW so a job title starting with "=" is never run as a formula
-            ws.append_rows([[*r[:9], r[9] or "", r[10] or ""] for r in adds], value_input_option="RAW")
+        if adds:
+            # write below the last ID ourselves: append_rows lands under a Sheets table without growing it,
+            # so each append overwrote the row the previous one wrote. RAW so a title starting with "=" stays text.
+            row = len(ws.col_values(1)) + 1
+            if row + len(adds) > ws.row_count:
+                ws.add_rows(row + len(adds) - ws.row_count)
+            ws.update(values=[[*r[:9], r[9] or "", r[10] or ""] for r in adds], range_name=f"A{row}",
+                      value_input_option="RAW")
             db.executemany("UPDATE roles SET sheet_state='ok' WHERE id=?", [(r[0],) for r in adds])
             db.commit()
         for role_id, status, picked_at, resumes in db.execute(
