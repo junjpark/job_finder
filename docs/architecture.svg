@@ -1,0 +1,130 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" width="1600" height="900">
+  <title>JobFinder architecture</title>
+  <defs>
+    <filter id="rough" x="-5%" y="-5%" width="110%" height="110%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.035" numOctaves="2" seed="7" result="noise"/>
+      <feDisplacementMap in="SourceGraphic" in2="noise" scale="3.2" xChannelSelector="R" yChannelSelector="G"/>
+    </filter>
+    <marker id="a" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="11" markerHeight="11" orient="auto-start-reverse">
+      <path d="M1 1 L10 6 L1 11" fill="none" stroke="#1a1a1a" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+    </marker>
+  </defs>
+
+  <rect width="1600" height="900" fill="#f2f2f2"/>
+
+  <!-- lines and boxes, roughened -->
+  <g filter="url(#rough)" stroke="#1a1a1a" stroke-width="2.6" fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <!-- watchlist sources -->
+    <rect x="70" y="70" width="190" height="62"/>
+    <rect x="70" y="160" width="190" height="62"/>
+    <rect x="70" y="250" width="190" height="62"/>
+    <rect x="330" y="150" width="190" height="86"/>
+    <path d="M262 101 L326 176" marker-end="url(#a)"/>
+    <path d="M262 191 L326 193" marker-end="url(#a)"/>
+    <path d="M262 281 L326 212" marker-end="url(#a)"/>
+
+    <!-- job boards -->
+    <rect x="620" y="48" width="320" height="104"/>
+
+    <!-- server -->
+    <rect x="560" y="262" width="500" height="300" stroke-width="3"/>
+    <rect x="590" y="300" width="190" height="86"/>
+    <rect x="830" y="292" width="200" height="118"/>
+    <rect x="590" y="452" width="190" height="80"/>
+    <rect x="830" y="446" width="200" height="86"/>
+    <path d="M425 238 Q470 330 586 336" marker-end="url(#a)"/>
+    <path d="M700 154 L690 296" marker-start="url(#a)" marker-end="url(#a)"/>
+    <path d="M782 343 L826 349" marker-end="url(#a)"/>
+    <path d="M838 412 L786 456" marker-end="url(#a)"/>
+    <path d="M828 489 L786 492" marker-end="url(#a)"/>
+
+    <!-- outputs -->
+    <rect x="1150" y="232" width="180" height="76"/>
+    <rect x="1150" y="380" width="200" height="86"/>
+    <rect x="1400" y="140" width="120" height="58"/>
+    <rect x="1400" y="290" width="120" height="58"/>
+    <path d="M1062 300 L1146 274" marker-end="url(#a)"/>
+    <path d="M1062 400 L1146 418" marker-end="url(#a)"/>
+    <path d="M1332 254 L1396 176" marker-end="url(#a)"/>
+    <path d="M1332 280 L1396 316" marker-end="url(#a)"/>
+
+    <!-- you -->
+    <circle cx="1490" cy="452" r="15" fill="#1a1a1a"/>
+    <path d="M1466 494 Q1490 462 1514 494 Z" fill="#1a1a1a"/>
+    <path d="M1462 200 Q1490 300 1490 430" marker-end="url(#a)"/>
+    <path d="M1460 350 L1484 428" marker-end="url(#a)"/>
+    <path d="M1462 470 L1356 432" marker-end="url(#a)"/>
+
+    <!-- reply path -->
+    <rect x="1330" y="590" width="200" height="64"/>
+    <rect x="1110" y="640" width="170" height="76"/>
+    <path d="M1490 520 L1448 586" marker-end="url(#a)"/>
+    <path d="M1328 624 L1284 664" marker-end="url(#a)"/>
+    <path d="M1110 660 Q1040 600 1010 536" marker-end="url(#a)"/>
+
+    <!-- mac -->
+    <rect x="530" y="636" width="500" height="200" stroke-width="3"/>
+    <rect x="556" y="686" width="62" height="50"/>
+    <rect x="636" y="686" width="62" height="50"/>
+    <rect x="716" y="686" width="62" height="50"/>
+    <rect x="796" y="686" width="100" height="50"/>
+    <rect x="740" y="772" width="160" height="50"/>
+    <rect x="916" y="686" width="96" height="136"/>
+    <path d="M587 738 L800 772" marker-end="url(#a)"/>
+    <path d="M667 738 L806 772" marker-end="url(#a)"/>
+    <path d="M747 738 L812 772" marker-end="url(#a)"/>
+    <path d="M846 738 L824 772" marker-end="url(#a)"/>
+    <path d="M902 798 L914 790" marker-end="url(#a)"/>
+    <path d="M640 566 L640 632" marker-end="url(#a)"/>
+    <path d="M700 632 L700 566" marker-end="url(#a)"/>
+  </g>
+
+  <!-- handwriting -->
+  <g font-family="'Chalkboard SE', Noteworthy, 'Marker Felt', 'Comic Sans MS', cursive" fill="#1a1a1a" font-size="19">
+    <text x="84" y="98">Simplify job lists</text><text x="84" y="120" font-size="15">(4,200 past hirers)</text>
+    <text x="84" y="188">YC companies</text><text x="84" y="210" font-size="15">(840 found by name)</text>
+    <text x="84" y="278">your list</text><text x="84" y="300" font-size="15">(42, game studios)</text>
+    <text x="346" y="182">watchlist</text><text x="346" y="206" font-size="16">5,106 boards,</text><text x="346" y="226" font-size="16">rebuilt daily</text>
+
+    <text x="638" y="80">job boards</text>
+    <text x="638" y="106" font-size="16">Greenhouse · Workday · Lever ·</text>
+    <text x="638" y="130" font-size="16">Ashby · EA · Netflix · 17 kinds</text>
+    <text x="712" y="210" font-size="15">~500 boards</text><text x="712" y="230" font-size="15">every 5 min</text>
+
+    <text x="790" y="254" font-size="17">lightsail server (systemd, 24/7)</text>
+    <text x="606" y="334">finder.py</text><text x="606" y="358" font-size="15">fetch every 5 min</text>
+    <text x="846" y="320">filter</text>
+    <text x="846" y="344" font-size="15">entry-level · US</text>
+    <text x="846" y="364" font-size="15">posted &lt; 24h</text>
+    <text x="846" y="384" font-size="15">software in the JD</text>
+    <text x="846" y="402" font-size="15">no reposts</text>
+    <text x="606" y="484">state.db</text><text x="606" y="508" font-size="15">(SQLite, role #s)</text>
+    <text x="846" y="476">read replies</text><text x="846" y="500" font-size="15">(long-poll SQS)</text>
+    <text x="372" y="300" font-size="15">boards</text><text x="372" y="318" font-size="15">to check</text>
+
+    <text x="1166" y="262">SNS topic</text><text x="1166" y="286" font-size="15">hourly report</text>
+    <text x="1166" y="410">google sheet</text><text x="1166" y="434" font-size="15">"Job Finder" tab</text><text x="1166" y="454" font-size="15">status · resumes</text>
+    <text x="1074" y="266" font-size="15" transform="rotate(-14 1074 266)">new roles</text>
+    <text x="1080" y="428" font-size="15" transform="rotate(10 1080 428)">sync</text>
+    <text x="1426" y="176">email</text>
+    <text x="1430" y="326">text</text>
+    <text x="1516" y="478" font-size="19">you</text>
+    <text x="1376" y="474" font-size="15">track apps</text>
+
+    <text x="1346" y="618">toll-free #</text><text x="1346" y="640" font-size="15">reply "214 219"</text>
+    <text x="1126" y="670">SQS queue</text><text x="1126" y="694" font-size="15">job-replies</text>
+    <text x="1012" y="610" font-size="15" transform="rotate(-50 1012 610)">picks</text>
+
+    <text x="546" y="664" font-size="17">your mac · claude code · /make-resumes</text>
+    <text x="575" y="717">A</text><text x="655" y="717">B</text><text x="735" y="717">C</text>
+    <text x="806" y="710" font-size="15">D</text><text x="806" y="728" font-size="13">benchmark</text>
+    <text x="756" y="802" font-size="16">blind recruiter</text>
+    <text x="928" y="714" font-size="15">ranked</text><text x="928" y="734" font-size="15">PDFs +</text><text x="928" y="754" font-size="15">summary</text>
+    <text x="574" y="602" font-size="15">picks</text><text x="574" y="620" font-size="15">(ssh)</text>
+    <text x="708" y="602" font-size="15">mark</text><text x="708" y="620" font-size="15">results</text>
+
+    <text x="1110" y="800" font-size="18">deployment (AWS us-east-1 · systemd on Ubuntu)</text>
+  </g>
+
+  <text x="60" y="860" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="82" fill="#1a1a1a">architecture</text>
+</svg>

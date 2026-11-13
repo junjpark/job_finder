@@ -1,5 +1,7 @@
 # Job finder
 
+![JobFinder architecture: a Lightsail server checks 5,106 job boards every 5 minutes, filters and stores new roles, reports them by email and text and to a Google Sheet; text replies pick roles, and a Claude Code command on a Mac writes and ranks resumes for them.](docs/architecture.png)
+
 `finder.py` finds new US entry-level and intern software roles within minutes of a company posting them. It reads companies' own job boards instead of the public new-grad lists, which trailed company postings by a median of 6.3 hours in a Nov 2026 sample.
 
 It checks about 5,100 job boards on 17 kinds of job-board services, including Greenhouse, Lever, Ashby, Workday, and the custom careers sites of EA, Microsoft, Netflix, and Valve. It runs as one Python file on a $7-a-month server, texts and emails a summary at most once an hour, and lets you text back the roles you want.
