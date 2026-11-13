@@ -1,0 +1,55 @@
+# Companies to always check every 5 minutes. One per line:
+#   Company Name  https://careers-link     (Greenhouse, Lever, Ashby, Workday, SmartRecruiters, Breezy, Rippling,
+#                                           Workable, Jobvite, JobScore or Gem board)
+#   Company Name | ats | id | id           (a custom careers site; see the examples below)
+#   Company Name                           (tried on Ashby, Greenhouse, Lever and Breezy; if none match, add the link)
+
+# Startups
+Zingage  https://jobs.ashbyhq.com/zingage
+Beli  https://beli.breezy.hr
+
+# Game companies
+Riot Games  https://job-boards.greenhouse.io/riotgames
+Riot Games University Programs  https://job-boards.greenhouse.io/riotgamesup
+Epic Games  https://job-boards.greenhouse.io/epicgames
+Roblox  https://job-boards.greenhouse.io/roblox
+Nintendo  https://job-boards.greenhouse.io/nintendo
+Bungie  https://job-boards.greenhouse.io/bungie
+Discord  https://job-boards.greenhouse.io/discord
+Naughty Dog  https://job-boards.greenhouse.io/naughtydog
+Insomniac Games  https://job-boards.greenhouse.io/insomniac
+Rockstar Games  https://job-boards.greenhouse.io/rockstargames
+PlayStation  https://job-boards.greenhouse.io/sonyinteractiveentertainmentglobal
+2K  https://job-boards.greenhouse.io/2k
+2K Early Careers  https://job-boards.greenhouse.io/2kearlycareers
+Take-Two Interactive  https://job-boards.greenhouse.io/taketwo
+Scopely  https://job-boards.greenhouse.io/scopely
+KRAFTON  https://job-boards.greenhouse.io/studiokraftonboard
+Bandai Namco Entertainment America  https://job-boards.greenhouse.io/bandainamco
+Gearbox  https://job-boards.greenhouse.io/gearbox
+Pocket Gems  https://job-boards.greenhouse.io/pocketgems
+Supercell  https://jobs.ashbyhq.com/supercell
+HoYoverse  https://jobs.ashbyhq.com/hoyoverse
+Jam City  https://jobs.lever.co/jamcity
+Kabam  https://jobs.lever.co/kabam
+Ubisoft  https://jobs.smartrecruiters.com/Ubisoft2
+Unity  https://unitytech.wd1.myworkdayjobs.com/Unity
+
+# Game companies with their own careers sites
+Activision  https://xboxgaming.wd1.myworkdayjobs.com/External
+Blizzard  https://xboxgaming.wd1.myworkdayjobs.com/Blizzard_External_Careers
+King  https://xboxgaming.wd1.myworkdayjobs.com/King_External_Careers
+EA (incl. Respawn) | avature | https://jobs.ea.com/en_US/careers
+Valve | valve | https://www.valvesoftware.com/en/
+Microsoft (incl. Xbox, Mojang) | pcsx | apply.careers.microsoft.com | microsoft.com
+Bethesda / ZeniMax | phenom | careers.zenimax.com
+Netflix (incl. Games) | eightfold | explore.jobs.netflix.net | netflix.com
+Sega of America | paycom | E743DEB45C5896F708643C7D7B581397
+Capcom USA  https://jobs.jobvite.com/capcomusa
+Square Enix (US)  https://apply.workable.com/square-enix-america
+Nexon America  https://careers.jobscore.com/jobs/nexonamericainc
+Comcast  https://comcast.wd115.myworkdayjobs.com/Comcast_Careers
+
+# Startups with their own careers sites
+Retool  https://jobs.gem.com/retool
+Rippling  https://ats.rippling.com/rippling

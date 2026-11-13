@@ -1,0 +1,17 @@
+# Your setup-specific guides, phone number, email, and server details
+private/
+
+# Data the finder writes at runtime
+state.db
+state.db.*
+watchlist.json
+probed.json
+all_companies.txt
+
+# Credentials, never commit
+google_service_account.json
+*.pem
+.aws/
+
+__pycache__/
+.DS_Store
