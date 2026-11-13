@@ -41,7 +41,7 @@ If the newest `checked` line is more than 10 minutes old, restart the finder. Th
 The finder sends a report at most once an hour, and only when it found a new role. A role counts as new when its job board says it went up in the last 24 hours.
 
 - The email lists every new role with its number, company, title, location, pay, and link. Roles from companies in `extra_companies.txt` come first.
-- The text is a one-line summary, such as `JobFinder: 3 new roles #214-216 (2 full-time, 1 intern). Notable: Riot Games, Epic Games, Beli. Reply with #s for resumes.`
+- The text is a one-line summary, such as `JobFinder: 3 new roles #214-216 (2 full-time, 1 intern). Notable: Riot Games, Epic Games, Beli. Reply #s for resumes, STOP to end.`
 
 Texts start only after AWS approves the toll-free number registration. Until then, you get email only.
 

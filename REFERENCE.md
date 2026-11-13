@@ -106,7 +106,7 @@ A `#` starts a comment. The finder skips blank lines.
 
 | Message | Format |
 | --- | --- |
-| Report text | `JobFinder: <n> new roles #<first>-<last> (<a> full-time, <b> intern). Notable: <up to 3 companies>. Reply with #s for resumes.` At most 160 characters. |
+| Report text | `JobFinder: <n> new roles #<first>-<last> (<a> full-time, <b> intern). Notable: <up to 3 companies>. Reply #s for resumes, STOP to end.` At most 160 characters. |
 | Report email | The subject is `JobFinder: <n> new roles #<first>-<last>`. The body holds the report text, then one block per role with number, company, title, location, pay, and link. |
 | Reply | Any text from `MY_PHONE`. The finder reads every number in it as a role number. |
 | Confirmation | `JobFinder: Picked for resumes: #<id> <company>, ...` and `. Not found: #<id>` for numbers with no role. |

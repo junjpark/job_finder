@@ -754,11 +754,15 @@ def notable_first(roles):
 def report_text(roles):
     interns = sum(bool(re.search(r"\bintern|co-?op", r["title"], re.I)) for r in roles)
     names = list(dict.fromkeys(r["company"] for r in notable_first(roles)))
-    shown = ", ".join(n[:16] for n in names[:3]) + (f" +{len(names) - 3} more" if len(names) > 3 else "")
     ids = sorted(r["id"] for r in roles)
     span = f"#{ids[0]}" if len(ids) == 1 else f"#{ids[0]}-{ids[-1]}"
-    return (f"JobFinder: {len(roles)} new role{'' if len(roles) == 1 else 's'} {span} ({len(roles) - interns} full-time, "
-            f"{interns} intern). Notable: {shown}. Reply with #s for resumes.")
+    for k in (3, 2, 1, 0):  # show fewer names until the text fits one 160-character message
+        shown = ", ".join(n[:14] for n in names[:k]) + (f" +{len(names) - k} more" if len(names) > k else "")
+        text = (f"JobFinder: {len(roles)} new role{'' if len(roles) == 1 else 's'} {span} ({len(roles) - interns} full-time, "
+                f"{interns} intern). Notable: {shown.strip()}. Reply #s for resumes, STOP to end.")
+        if len(text) <= 160:
+            break
+    return text
 
 
 def report_email(roles):
@@ -966,9 +970,11 @@ def selftest():
     roles = [dict(zip(ROLE_COLS, r)) for r in db.execute(f"SELECT {','.join(ROLE_COLS)} FROM roles")]
     msg = report_text(roles)
     assert msg == ("JobFinder: 5 new roles #1-5 (3 full-time, 2 intern). Notable: Zingage, RTX, NVIDIA +2 more. "
-                   "Reply with #s for resumes."), msg
+                   "Reply #s for resumes, STOP to end."), msg
     roles = [dict(r, company="A Company Name Way Over Twenty Chars " + str(r["id"])) for r in roles * 200]
     assert len(report_text(roles)) <= 160, len(report_text(roles))
+    big = [dict(r, id=r["id"] + 99990) for r in roles]  # 6-digit role numbers
+    assert len(report_text(big)) <= 160, len(report_text(big))
     email = report_email([dict(zip(ROLE_COLS, r)) for r in db.execute(f"SELECT {','.join(ROLE_COLS)} FROM roles")])
     assert email.index("#2  Zingage | Software Engineer") < email.index("#1  RTX | Software Engineer I"), email
     assert email.count("https://example.com/job") == 5 and "pay not listed" in email
