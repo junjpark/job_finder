@@ -45,6 +45,7 @@ PRIORITY_COUNT = 300
 REST_CYCLE_TICKS = 24
 WORKERS = 16
 MAX_AGE_DAYS = 1
+MIN_SOFTWARE_TERMS = 2
 REPOST_WINDOW_DAYS = 90
 REPORT_EVERY_SECONDS = 3600
 PROBE_PER_DAY = 500
@@ -63,7 +64,7 @@ LEVEL_POS = re.compile(
 LEVEL_NEG = re.compile(
     r"\b(?:senior|sr|staff|principal|lead|manager|director|head|vp|(?<!/)ii|iii|iv|phd|ph\.d|postdoc|mba|2025|2026"
     r"|(?:engineer|developer|scientist|analyst|sde|level)\s+[23]|recruit\w*|sourcer|talent acquisition"
-    r"|graduate (?:intern|internship|research|appointee|student))\b", re.I)
+    r"|graduate (?:intern|internship|research|appointee|student)|adjunct|faculty|professor|instructor|lecturer|teacher)\b", re.I)
 DOMAIN = re.compile(
     r"software|engineer|developer|programmer|data|machine learning|\bml\b|\bai\b|artificial intelligence"
     r"|scien|quant|research|infrastructure|platform|security|\bsre\b|devops|cloud|back-?end|front-?end"
@@ -88,6 +89,54 @@ def age_days(published, now=None):
 def is_recent(published):
     age = age_days(published)
     return age is None or age <= MAX_AGE_DAYS
+
+
+SOFTWARE_TERMS = re.compile(
+    r"(?<!\w)(?:python|java|javascript|typescript|c\+\+|c#|golang|rust|kotlin|swift|scala|ruby|php|sql|nosql|"
+    r"react\.?js|react native|angular|vue|node\.?js|django|flask|spring boot|\.net|aws|azure|gcp|google cloud|docker|"
+    r"kubernetes|terraform|linux|git|github|ci/cd|graphql|kafka|spark|airflow|pandas|numpy|pytorch|tensorflow|"
+    r"scikit-learn|machine learning|software development|software engineering|programming|computer science|"
+    r"data structures|algorithms|object[- ]oriented)(?!\w)", re.I)
+
+
+def detail_url(j):
+    """Where a posting's full description lives: the service's job data feed, or the job page itself."""
+    board, jid = j["key"].split("#", 1)
+    ats, ident = board.split(":", 1)
+    if ats == "greenhouse":
+        return f"https://boards-api.greenhouse.io/v1/boards/{ident}/jobs/{jid}"
+    if ats == "smartrecruiters":
+        return f"https://api.smartrecruiters.com/v1/companies/{j['url'].split('/')[3]}/postings/{jid}"
+    if ats == "workday":
+        _, _, host, site, rest = j["url"].split("/", 4)
+        return f"https://{host}/wday/cxs/{host.split('.')[0]}/{site}/{rest}"
+    if ats == "workable":
+        return f"https://apply.workable.com/api/v2/accounts/{ident}/jobs/{jid}"
+    if ats == "rippling":
+        return f"https://api.rippling.com/platform/api/ats/v2/board/{ident}/jobs/{jid}"
+    if ats == "pcsx":
+        host, domain = ident.split("/")
+        return f"https://{host}/api/pcsx/position_details?position_id={jid}&domain={domain}&hl=en"
+    return j["url"]
+
+
+def software_ok(j):
+    """True when the job description names at least MIN_SOFTWARE_TERMS software tools or requirements."""
+    text = j.get("desc")
+    if not text:
+        try:
+            try:
+                text = get_text(detail_url(j))
+            except (urllib.error.URLError, OSError):  # one retry for a busy or flaky server
+                time.sleep(2)
+                text = get_text(detail_url(j))
+        except Exception:  # shortcut: an unreadable description passes, so a flaky page never hides a job
+            return True
+    text = re.sub(r"(?is)<(script|style|noscript)\b(?![^>]*ld\+json)[^>]*>.*?</\1>", " ", text)  # page code, not the job
+    text = re.sub(r"<[^>]+>", " ", html.unescape(text))
+    if len(text.strip()) < 500:  # shortcut: a page with no description text (a JavaScript app) passes
+        return True
+    return len({m.lower() for m in SOFTWARE_TERMS.findall(text)}) >= MIN_SOFTWARE_TERMS
 
 
 def title_ok(title):
@@ -315,10 +364,10 @@ def get_json(url, data=None, headers=None):
         return json.load(r)
 
 
-def job(board, jid, title, loc, url, us, pay="", published=""):
+def job(board, jid, title, loc, url, us, pay="", published="", desc=""):
     return {"key": f"{board['key']}#{jid}", "company": board["company"], "title": (title or "").strip(),
             "location": loc or "", "us": us, "pay": pay, "url": url, "published": published, "ats": board["ats"],
-            "priority": int(board.get("priority", False)), "listings": board.get("count", 0)}
+            "priority": int(board.get("priority", False)), "listings": board.get("count", 0), "desc": desc}
 
 
 def fetch_greenhouse(b, seen):
@@ -339,7 +388,7 @@ def fetch_lever(b, seen):
         us = us_from(j.get("country"), locs)
         s = j.get("salaryRange") or {}
         pay = f"{s.get('min')}-{s.get('max')} {s.get('currency', '')}/{s.get('interval', '')}" if s else ""
-        out.append(job(b, j["id"], j["text"], locs, j["hostedUrl"], us, pay))  # createdAt is draft time, not publish time
+        out.append(job(b, j["id"], j["text"], locs, j["hostedUrl"], us, pay, desc=json.dumps(j)))  # createdAt is draft time
     return out
 
 
@@ -354,7 +403,7 @@ def fetch_ashby(b, seen):
         locs = "; ".join(filter(None, [j.get("location")] + [s.get("location") for s in j.get("secondaryLocations") or []]))
         us = "us" if countries & US_COUNTRY else (us_status(locs) if not countries else "non-us")
         pay = (j.get("compensation") or {}).get("compensationTierSummary") or ""
-        out.append(job(b, j["id"], j["title"], locs, j["jobUrl"], us, pay, j.get("publishedAt", "")))
+        out.append(job(b, j["id"], j["title"], locs, j["jobUrl"], us, pay, j.get("publishedAt", ""), json.dumps(j)))
     return out
 
 
@@ -511,7 +560,7 @@ def fetch_eightfold(b, seen, max_pages=60):
         for p in posts:
             loc = "; ".join(filter(None, p.get("locations") or [p.get("location")]))
             out.append(job(b, p["id"], p["name"], loc, p.get("canonicalPositionUrl") or f"https://{host}/careers/job/{p['id']}",
-                           us_status(loc), published=iso(p.get("t_create"))))
+                           us_status(loc), published=iso(p.get("t_create")), desc=json.dumps(p)))
         if len(posts) < 10 or (page + 1) * 10 >= d.get("count", 0) or page_has_seen(b, [p["id"] for p in posts], seen):
             break
     return out
@@ -571,7 +620,7 @@ def fetch_jobscore(b, seen):
         loc = j.get("location", "")
         us = "us" if j.get("country") == "US" else us_status(loc)
         out.append(job(b, j["id"], j["title"], loc, j["detail_url"], us, j.get("formatted_public_compensation", ""),
-                       j.get("opened_date") or j.get("created_on", "")))
+                       j.get("opened_date") or j.get("created_on", ""), json.dumps(j)))
     return out
 
 
@@ -581,7 +630,7 @@ def fetch_gem(b, seen):
         names = [(j.get("location") or {}).get("name")] + [(o.get("location") or {}).get("name") for o in j.get("offices") or []]
         loc = "; ".join(n for n in dict.fromkeys(names) if n)
         out.append(job(b, j["id"], j["title"], loc, j["absolute_url"], us_status(loc),
-                       published=j.get("first_published_at", "")))
+                       published=j.get("first_published_at", ""), desc=json.dumps(j)))
     return out
 
 
@@ -638,6 +687,8 @@ def open_db(path=DB):
         location TEXT, pay TEXT, ats TEXT, url TEXT, published TEXT, priority INTEGER, listings INTEGER,
         status TEXT DEFAULT 'new', picked_at TEXT, reported INTEGER DEFAULT 0, sheet_state TEXT DEFAULT 'add')""")
     db.execute("CREATE TABLE IF NOT EXISTS meta (name TEXT PRIMARY KEY, value REAL)")
+    if "resumes" not in [c[1] for c in db.execute("PRAGMA table_info(roles)")]:  # added after the first deploy
+        db.execute("ALTER TABLE roles ADD COLUMN resumes TEXT")
     return db
 
 
@@ -671,12 +722,17 @@ def tick(db, boards, emit_existing=False):
                             and (not first_poll or emit_existing or age_days(j["published"]) is not None)]
     now = time.strftime("%Y-%m-%d %H:%M")
     since = time.strftime("%Y-%m-%d %H:%M", time.localtime(time.time() - REPOST_WINDOW_DAYS * 86400))
-    kept = []
+    candidates, picked = [], set()
     for j in new_matches:
-        if db.execute("SELECT 1 FROM roles WHERE company=? AND lower(title)=lower(?) AND found_at>=?",
-                      (j["company"], j["title"], since)).fetchone():
+        same_role = (j["company"], j["title"].lower())
+        if same_role in picked or db.execute("SELECT 1 FROM roles WHERE company=? AND lower(title)=? AND found_at>=?",
+                                             (*same_role, since)).fetchone():
             continue
-        kept.append(j)
+        picked.add(same_role)
+        candidates.append(j)
+    with ThreadPoolExecutor(WORKERS) as pool:
+        kept = [j for j, ok in zip(candidates, pool.map(software_ok, candidates)) if ok]
+    for j in kept:
         db.execute("INSERT OR IGNORE INTO roles (key, found_at, company, title, location, pay, ats, url, published,"
                    " priority, listings) VALUES (?,?,?,?,?,?,?,?,?,?,?)",
                    (j["key"], now, j["company"], j["title"], j["location"], j["pay"], j["ats"], j["url"],
@@ -780,7 +836,14 @@ def check_replies(db, wait):
 
 
 SHEET_HEADER = ["ID", "Found", "Company", "Title", "Location", "Pay", "Job board", "Link", "Status", "Picked at",
-                "Resumes", "Applied", "Notes"]
+                "Resumes", "Applied", "Notes"]  # the finder writes A-K; Applied and Notes are yours
+
+
+def mark(db, role_id, status, resumes=""):
+    """Record a role's resume result; the sheet shows it in Status and Resumes."""
+    db.execute("UPDATE roles SET status=?, resumes=?, sheet_state=CASE sheet_state WHEN 'add' THEN 'add' ELSE 'update' END"
+               " WHERE id=?", (status, resumes, role_id))
+    db.commit()
 
 
 def sync_sheet(db):
@@ -791,17 +854,17 @@ def sync_sheet(db):
         ws = gspread.service_account(filename=GOOGLE_CREDENTIALS).open_by_key(GOOGLE_SHEET_ID).sheet1
         if not ws.acell("A1").value:
             ws.update(values=[SHEET_HEADER], range_name="A1")
-        adds = db.execute("SELECT id, found_at, company, title, location, pay, ats, url, status, picked_at"
+        adds = db.execute("SELECT id, found_at, company, title, location, pay, ats, url, status, picked_at, resumes"
                           " FROM roles WHERE sheet_state='add' ORDER BY id").fetchall()
         if adds:  # RAW so a job title starting with "=" is never run as a formula
-            ws.append_rows([[*r[:9], r[9] or ""] for r in adds], value_input_option="RAW")
+            ws.append_rows([[*r[:9], r[9] or "", r[10] or ""] for r in adds], value_input_option="RAW")
             db.executemany("UPDATE roles SET sheet_state='ok' WHERE id=?", [(r[0],) for r in adds])
             db.commit()
-        for role_id, status, picked_at in db.execute(
-                "SELECT id, status, picked_at FROM roles WHERE sheet_state='update'").fetchall():
+        for role_id, status, picked_at, resumes in db.execute(
+                "SELECT id, status, picked_at, resumes FROM roles WHERE sheet_state='update'").fetchall():
             cell = ws.find(str(role_id), in_column=1)
             if cell:
-                ws.update(values=[[status, picked_at or ""]], range_name=f"I{cell.row}:J{cell.row}")
+                ws.update(values=[[status, picked_at or "", resumes or ""]], range_name=f"I{cell.row}:K{cell.row}")
             db.execute("UPDATE roles SET sheet_state='ok' WHERE id=?", (role_id,))
             db.commit()
     except Exception as e:
@@ -812,6 +875,16 @@ def main(args):
     if "selftest" in args:
         return selftest()
     db = open_db()
+    if args[:1] == ["picks"]:  # roles waiting for resumes, as JSON for the make-resumes command
+        cols = ["id", "company", "title", "location", "pay", "url", "published"]
+        rows = db.execute(f"SELECT {','.join(cols)} FROM roles WHERE status='picked' ORDER BY id")
+        return print(json.dumps([dict(zip(cols, r)) for r in rows], indent=1))
+    if args[:1] == ["pick"]:  # pick ROLE_ID...: the same as texting the numbers back
+        print(pick(db, " ".join(args[1:])))
+        return sync_sheet(db)
+    if args[:1] == ["mark"]:  # mark ROLE_ID STATUS [RESUME_SUMMARY]
+        mark(db, int(args[1]), args[2], args[3] if len(args) > 3 else "")
+        return sync_sheet(db)
     limit = int(args[args.index("--limit") + 1]) if "--limit" in args else None
     last_report = (db.execute("SELECT value FROM meta WHERE name='last_report'").fetchone() or [0.0])[0]
     while True:
@@ -901,6 +974,16 @@ def selftest():
     assert db.execute("SELECT id FROM roles WHERE status='picked'").fetchall() == [(2,), (4,)]
     assert pick(db, "thanks!") == "JobFinder: Reply with role numbers, like 214 219. Reply STOP to opt out."
     assert pick(db, "123456789012345678901") == pick(db, "thanks!")
+    mark(db, 2, "resumes ready", "B 84 interview; A 71; D 64; benchmark C 88")
+    assert db.execute("SELECT status, resumes FROM roles WHERE id=2").fetchone() == (
+        "resumes ready", "B 84 interview; A 71; D 64; benchmark C 88")
+    filler = " Our team builds great things together." * 20
+    swe = {"key": "x:y#1", "url": "u", "desc": "<p>You will write Python and SQL services.</p>" + filler}
+    assert software_ok(swe)
+    assert not software_ok(dict(swe, desc="<p>Operate a weed trimmer and change air filters.</p>" + filler))
+    assert not software_ok(dict(swe, desc="<script>var javascript = 'python sql';</script><p>Answer phones.</p>" + filler))
+    assert software_ok(dict(swe, desc="<div id=root></div>"))  # a JavaScript app with no text: let it through
+    assert not title_ok("Mathematics for Elementary Teachers I - Adjunct Faculty - Traditional Campus")
     selftest_tick()
     assert slug_candidates("Scale AI", "https://scale.com") == ["scaleai", "scale-ai", "scale"]
     assert board_from_url("https://jobs.ashbyhq.com/zingage") == ("ashby", ("zingage",))

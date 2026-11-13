@@ -52,11 +52,23 @@ Texts start only after AWS approves the toll-free number registration. Until the
 
 Within about 20 seconds, you get a confirmation such as `JobFinder: Picked for resumes: #214 Riot Games, #219 Beli.` The finder marks those roles `picked` in `state.db`. The finder ignores replies from any other phone number.
 
-To see your picks, run this on the server:
+Until texting works, pick roles from the server instead:
 
 ```bash
-cd ~/job_finder && python3 -c "import sqlite3; [print(r) for r in sqlite3.connect('state.db').execute(\"SELECT id, company, title, url FROM roles WHERE status='picked'\")]"
+cd ~/job_finder && ~/venv/bin/python finder.py pick 214 219
 ```
+
+To see your picks, run `~/venv/bin/python finder.py picks` there.
+
+## Make resumes for picked roles
+
+In Claude Code, open this folder and run:
+
+```
+/make-resumes
+```
+
+For each picked role, it reads the posting and checks eligibility with your profile. A role that fails gets marked `ineligible` with the reason. For the rest, it writes three resumes from `private/resume.tex` and one benchmark, fact-checks yours, has a blind recruiter score all four, and marks the role `resumes ready`. The files land in `resumes/<id>-<company>/`, and `summary.md` says which resume to send. Add role numbers, such as `/make-resumes 214`, to run only those.
 
 ## Add a company
 

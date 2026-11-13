@@ -15,3 +15,6 @@ google_service_account.json
 
 __pycache__/
 .DS_Store
+
+# Resumes and postings made by /make-resumes (personal)
+resumes/

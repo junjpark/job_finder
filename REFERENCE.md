@@ -11,6 +11,9 @@ Facts about `finder.py`, its files, and its deployment, as of Nov 13, 2026. For 
 | `python3 finder.py --once --limit 50` | Same, for the first 50 boards only. |
 | `python3 finder.py --once --emit-existing` | Same, but also reports matching jobs on boards it has never checked. Use it for testing. |
 | `python3 finder.py selftest` | Runs the built-in assertions and prints `selftest passed`. Makes no network requests. |
+| `python3 finder.py picks` | Prints the picked roles as JSON. `/make-resumes` reads this. |
+| `python3 finder.py pick 214 219` | Picks roles, the same as texting the numbers back. |
+| `python3 finder.py mark 214 "resumes ready" "send B (84, interview)"` | Sets a role's status and its resume result, which the sheet shows in Status and Resumes. |
 
 ## Settings in `finder.py`
 
@@ -20,6 +23,7 @@ Facts about `finder.py`, its files, and its deployment, as of Nov 13, 2026. For 
 | `PRIORITY_COUNT` | `300` | Number of boards, from the top of the watchlist, checked at every tick. |
 | `REST_CYCLE_TICKS` | `24` | The finder checks every other board once per this many ticks, which is 2 hours. The slice comes from the clock. |
 | `WORKERS` | `16` | Boards fetched at the same time. |
+| `MIN_SOFTWARE_TERMS` | `2` | Fewest software tools or requirements the job description must name. |
 | `MAX_AGE_DAYS` | `1` | Oldest posting age the finder reports. For Workday, `1` allows "Posted Today" and "Posted Yesterday". |
 | `REPOST_WINDOW_DAYS` | `90` | The finder skips a role whose company and title it reported within this many days. |
 | `REPORT_EVERY_SECONDS` | `3600` | Shortest time between two reports. The finder stores the last report time in the `meta` table, so restarts keep it. |
@@ -95,7 +99,7 @@ A `#` starts a comment. The finder skips blank lines.
 | `seen` | `key`, `first_seen` | Every job the finder has seen. `key` is `<board key>#<job id>`. |
 | `seeded` | `board` | Every board that has returned at least one job. |
 | `meta` | `name`, `value` | Values that survive restarts. `last_report` is the time of the last report. |
-| `roles` | `id`, `key`, `found_at`, `company`, `title`, `location`, `pay`, `ats`, `url`, `published`, `priority`, `listings`, `status`, `picked_at`, `reported`, `sheet_state` | Every reported role. `id` is the number in texts and emails. `status` is `new` or `picked`. `reported` is `1` after a report includes the role. `sheet_state` is `add`, `update`, or `ok`. |
+| `roles` | `id`, `key`, `found_at`, `company`, `title`, `location`, `pay`, `ats`, `url`, `published`, `priority`, `listings`, `status`, `picked_at`, `reported`, `sheet_state`, `resumes` | Every reported role. `id` is the number in texts and emails. `status` is `new`, `picked`, `resumes ready`, or `ineligible`. `resumes` holds the resume result. `reported` is `1` after a report includes the role. `sheet_state` is `add`, `update`, or `ok`. |
 
 ## Messages
 
@@ -109,7 +113,7 @@ A `#` starts a comment. The finder skips blank lines.
 
 ## Tracker sheet columns
 
-The finder writes columns A to J and never writes K to M.
+The finder writes columns A to K and never writes L or M.
 
 `ID`, `Found`, `Company`, `Title`, `Location`, `Pay`, `Job board`, `Link`, `Status`, `Picked at`, `Resumes`, `Applied`, `Notes`
 
