@@ -62,6 +62,7 @@ GMAIL_ADDRESS = os.environ.get("GMAIL_ADDRESS")      # email reports go through 
 GMAIL_APP_PASSWORD = os.environ.get("GMAIL_APP_PASSWORD")
 REPORT_BCC = [a.strip() for a in os.environ.get("REPORT_BCC", "").split(",") if a.strip()]  # their replies never pick
 PICK_ALIAS = GMAIL_ADDRESS.replace("@", "+jobfinder@", 1) if GMAIL_ADDRESS else None  # Reply-To of every report
+REPORT_ALIAS = GMAIL_ADDRESS.replace("@", "+jobreports@", 1) if GMAIL_ADDRESS else None  # To of every report, for Gmail filters
 GOOGLE_SHEET_ID = os.environ.get("GOOGLE_SHEET_ID")
 GOOGLE_CREDENTIALS = os.environ.get("GOOGLE_CREDENTIALS", str(HERE / "google_service_account.json"))
 GOOGLE_SHEET_TAB = os.environ.get("GOOGLE_SHEET_TAB", "Job Finder")  # its own tab, so a shared tracker's tabs stay untouched
@@ -845,11 +846,11 @@ def send_report(db, to):
     return sent
 
 
-def send_gmail(subject, body, in_reply_to=None, bcc=()):  # to yourself, with replies routed to PICK_ALIAS
+def send_gmail(subject, body, in_reply_to=None, bcc=()):  # to REPORT_ALIAS, with replies routed to PICK_ALIAS
     import smtplib
     from email.message import EmailMessage
     m = EmailMessage()
-    m["From"], m["To"], m["Reply-To"], m["Subject"] = f"JobFinder <{GMAIL_ADDRESS}>", GMAIL_ADDRESS, PICK_ALIAS, subject
+    m["From"], m["To"], m["Reply-To"], m["Subject"] = f"JobFinder <{GMAIL_ADDRESS}>", REPORT_ALIAS, PICK_ALIAS, subject
     if in_reply_to:
         m["In-Reply-To"] = m["References"] = in_reply_to
     if bcc:  # send_message delivers to these and strips the header
@@ -887,7 +888,7 @@ def check_email_replies(db):
         return
     import email, imaplib
     from email import policy
-    from email.utils import parseaddr
+    from email.utils import getaddresses, parseaddr
     try:
         with imaplib.IMAP4_SSL("imap.gmail.com", timeout=30) as box:
             box.login(GMAIL_ADDRESS, GMAIL_APP_PASSWORD)
@@ -895,7 +896,8 @@ def check_email_replies(db):
             for num in box.search(None, "UNSEEN", "TO", f'"{PICK_ALIAS}"')[1][0].split():
                 try:
                     msg = email.message_from_bytes(box.fetch(num, "(RFC822)")[1][0][1], policy=policy.default)  # now read
-                    if parseaddr(msg["From"] or "")[1].lower() == GMAIL_ADDRESS.lower():
+                    to = [a.lower() for _, a in getaddresses(msg.get_all("To", []))]
+                    if parseaddr(msg["From"] or "")[1].lower() == GMAIL_ADDRESS.lower() and PICK_ALIAS.lower() in to:
                         send_gmail(msg["Subject"] or "JobFinder", pick(db, email_reply_text(msg)), msg["Message-ID"])
                 except Exception as e:  # an unreadable reply must not block the ones behind it
                     print(f"skipped an email reply: {e}", file=sys.stderr)

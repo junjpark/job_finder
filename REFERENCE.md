@@ -39,7 +39,7 @@ Each feature stays off until you set its variables. The server's values live in 
 | `SNS_TOPIC_ARN` | Reports | `arn:aws:sns:us-east-1:<account>:job-finder` |
 | `REPLY_QUEUE_URL` | Replies | `https://sqs.us-east-1.amazonaws.com/<account>/job-replies` |
 | `MY_PHONE` | Replies | Your phone in E.164 form, such as `+1XXXXXXXXXX`. The finder ignores replies from other numbers. |
-| `GMAIL_ADDRESS` | Email replies | Your Gmail. When set with the password, report emails come from and go to it with `Reply-To: <you>+jobfinder@gmail.com`, instead of through SNS. |
+| `GMAIL_ADDRESS` | Email replies | Your Gmail. When set with the password, report emails and confirmations come from it and go to `<you>+jobreports@gmail.com`, with `Reply-To: <you>+jobfinder@gmail.com`, instead of through SNS. Only mail to the `+jobfinder` address counts as a pick. |
 | `GMAIL_APP_PASSWORD` | Email replies | A Google app password, kept in `gmail.env` (mode 600) rather than the service file. Used for sending (SMTP) and reading replies (IMAP). |
 | `REPORT_BCC` | Email replies | Optional. Comma-separated addresses that get a blind copy of every report email sent through Gmail, but not pick confirmations. Replies from them never pick roles. Kept in `gmail.env`. |
 | `GOOGLE_SHEET_ID` | Tracker sheet | Not set |

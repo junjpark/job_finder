@@ -91,4 +91,6 @@ Each role in the text and email has a number. Reply to the text with the numbers
 
 Reply to a report email with the numbers you want. The finder checks every 5 minutes, ignores the quoted report, and confirms in the same thread.
 
+To keep reports out of your inbox, make a Gmail filter for `to:you+jobreports@gmail.com` that skips the inbox and applies a `JobFinder` label. Don't filter `+jobfinder`: your pick replies go there, and the finder reads them only from the inbox. The Gmail phone app notifies only for inbox mail unless you turn on notifications for the label.
+
 To send the report emails to someone else too, add `REPORT_BCC=them@example.com` (comma-separated for several) as a line in `gmail.env` and restart the service. They get a blind copy of each report, not your pick confirmations, and their replies never pick roles. Each report includes your tracker link, which they can open only if the sheet is shared with them.
