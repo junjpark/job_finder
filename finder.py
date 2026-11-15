@@ -24,6 +24,7 @@ Optional features, each turned on by environment variables (pip install boto3 gs
              MY_PHONE         Only texts from this number are accepted.
   Email      GMAIL_ADDRESS    Email reports come from and go to this Gmail, and replying to one picks roles
   replies    GMAIL_APP_PASSWORD  (replies go to <you>+jobfinder@gmail.com and are read every 5 minutes).
+             REPORT_BCC       Comma-separated addresses blind-copied on report emails (not on pick confirmations).
   Tracker    GOOGLE_SHEET_ID  Every role and its status go to this sheet; columns K-M are yours.
              GOOGLE_CREDENTIALS  path to the service account key (default: google_service_account.json)
 Picked roles have status 'picked' in the sheet and in state.db; the resume step reads them from there.
@@ -59,6 +60,7 @@ REPLY_QUEUE_URL = os.environ.get("REPLY_QUEUE_URL")
 MY_PHONE = os.environ.get("MY_PHONE")                # replies are only accepted from this number, e.g. +12065550123
 GMAIL_ADDRESS = os.environ.get("GMAIL_ADDRESS")      # email reports go through this Gmail so replies to them can be read
 GMAIL_APP_PASSWORD = os.environ.get("GMAIL_APP_PASSWORD")
+REPORT_BCC = [a.strip() for a in os.environ.get("REPORT_BCC", "").split(",") if a.strip()]  # their replies never pick
 PICK_ALIAS = GMAIL_ADDRESS.replace("@", "+jobfinder@", 1) if GMAIL_ADDRESS else None  # Reply-To of every report
 GOOGLE_SHEET_ID = os.environ.get("GOOGLE_SHEET_ID")
 GOOGLE_CREDENTIALS = os.environ.get("GOOGLE_CREDENTIALS", str(HERE / "google_service_account.json"))
@@ -836,20 +838,22 @@ def send_report(db, to):
         return False
     short = report_text(roles)
     subject, body = short.split(" (")[0][:100], report_email(roles) if to == "email" else short
-    sent = send_gmail(subject, body) if to == "email" and GMAIL_APP_PASSWORD else sns_publish(to, Subject=subject, Message=body)
+    sent = send_gmail(subject, body, bcc=REPORT_BCC) if to == "email" and GMAIL_APP_PASSWORD else sns_publish(to, Subject=subject, Message=body)
     if sent:
         db.executemany(f"UPDATE roles SET {col}=1 WHERE id=?", [(r["id"],) for r in roles])
         db.commit()
     return sent
 
 
-def send_gmail(subject, body, in_reply_to=None):  # to yourself, with replies routed to PICK_ALIAS
+def send_gmail(subject, body, in_reply_to=None, bcc=()):  # to yourself, with replies routed to PICK_ALIAS
     import smtplib
     from email.message import EmailMessage
     m = EmailMessage()
     m["From"], m["To"], m["Reply-To"], m["Subject"] = f"JobFinder <{GMAIL_ADDRESS}>", GMAIL_ADDRESS, PICK_ALIAS, subject
     if in_reply_to:
         m["In-Reply-To"] = m["References"] = in_reply_to
+    if bcc:  # send_message delivers to these and strips the header
+        m["Bcc"] = ", ".join(bcc)
     m.set_content(body)
     try:
         with smtplib.SMTP_SSL("smtp.gmail.com", 465, timeout=30) as s:
@@ -1178,7 +1182,7 @@ def selftest_tick():
     global sns_publish, send_gmail, GMAIL_APP_PASSWORD
     real, real_gmail, real_password, sent = sns_publish, send_gmail, GMAIL_APP_PASSWORD, []
     sns_publish = lambda to, **kw: sent.append(to) or True
-    send_gmail = lambda subject, body, in_reply_to=None: sent.append("gmail") or True
+    send_gmail = lambda subject, body, in_reply_to=None, bcc=(): sent.append(("gmail", *bcc) if bcc else "gmail") or True
     try:
         GMAIL_APP_PASSWORD = None
         assert send_report(db, "email") and not send_report(db, "email")
@@ -1186,8 +1190,12 @@ def selftest_tick():
         GMAIL_APP_PASSWORD = "set"  # with Gmail set up, email reports go through it so replies can be read
         db.execute("UPDATE roles SET reported=0")
         assert send_report(db, "email") and sent == ["email", "sms", "gmail"], sent
+        REPORT_BCC.append("friend@example.com")
+        db.execute("UPDATE roles SET reported=0")
+        assert send_report(db, "email") and sent[-1] == ("gmail", "friend@example.com"), sent
     finally:
         sns_publish, send_gmail, GMAIL_APP_PASSWORD = real, real_gmail, real_password
+        REPORT_BCC.clear()
 
 
 if __name__ == "__main__":

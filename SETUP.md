@@ -90,3 +90,5 @@ Each role in the text and email has a number. Reply to the text with the numbers
 3. Remove the email subscription from the `job-finder` SNS topic. Report emails now come from your Gmail, so keeping it would send each report twice.
 
 Reply to a report email with the numbers you want. The finder checks every 5 minutes, ignores the quoted report, and confirms in the same thread.
+
+To send the report emails to someone else too, add `REPORT_BCC=them@example.com` (comma-separated for several) as a line in `gmail.env` and restart the service. They get a blind copy of each report, not your pick confirmations, and their replies never pick roles. Each report includes your tracker link, which they can open only if the sheet is shared with them.
