@@ -48,9 +48,9 @@ Texts start only after AWS approves the toll-free number registration. Until the
 ## Pick roles for resumes
 
 1. Find the numbers of the roles you want in the email or the text.
-2. Reply to the text from the phone number in `MY_PHONE` with those numbers, such as `214 219`.
+2. Reply to the text from the phone number in `MY_PHONE` with those numbers, such as `214 219`. Or, if email replies are set up (see SETUP.md), reply to the report email with them.
 
-Within about 20 seconds, you get a confirmation such as `JobFinder: Picked for resumes: #214 Riot Games, #219 Beli.` The finder marks those roles `picked` in `state.db`. The finder ignores replies from any other phone number.
+Within about 20 seconds for a text, or 5 minutes for an email, you get a confirmation such as `JobFinder: Picked for resumes: #214 Riot Games, #219 Beli.` The finder marks those roles `picked` in `state.db`. The finder ignores replies from any other phone number or email address, and ignores the role numbers in the quoted report under your reply.
 
 Until texting works, pick roles from the server instead:
 

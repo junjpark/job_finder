@@ -8,19 +8,20 @@ Most companies post jobs through a hosted job board such as Greenhouse, Lever, A
 
 The alternative was to read Simplify's public new-grad and internship lists, which most students watch. On Nov 13, 2026, a comparison of 29 new Simplify listings against each job's publish time on the company's own board found that Simplify trailed by a median of 6.3 hours. Some listings trailed by 15 days. Reading the boards directly removes that delay. Simplify still matters, because its listing history is the best free record of which companies hire new grads.
 
-## Build the watchlist from three sources
+## Build the watchlist from four sources
 
-The finder keeps a list of boards to check in `watchlist.json` and rebuilds it once a day. Three sources feed it:
+The finder keeps a list of boards to check in `watchlist.json` and rebuilds it once a day. Four sources feed it:
 
 1. **Simplify's listing history.** Every application link in Simplify's two `listings.json` files names a job board. That gives about 4,200 boards of companies that have hired new grads or interns before.
 2. **Y Combinator companies.** The finder takes every active, public, or acquired company from the yc-oss company list and guesses its board name on Ashby, Greenhouse, Lever, and Breezy. A feed that returns 404 means no board. This adds about 840 startups that never posted on Simplify. The finder caches the guesses in `probed.json`. A guess counts as stale after a week, and each daily rebuild re-checks only the 500 oldest, because checking all 5,300 names at once takes about 25 minutes and no boards get checked meanwhile. A request that fails counts as "no board" until its next re-check.
 3. **`extra_companies.txt`.** Your own list. It holds companies that matter to you, such as game studios, and companies with custom careers sites that need their own code.
+4. **`career_ops_companies.txt`.** 222 US Greenhouse and Lever boards from the [career-ops](https://github.com/career-ops-hq/career-ops) employer registry that the other sources missed, including Databricks, Datadog, and Rubrik. Simplify often links these companies' own careers pages, which name no job board. The registry is by the career-ops contributors and licensed CC BY 4.0. These boards get the normal 2-hour rotation; moving one into `extra_companies.txt` checks it every 5 minutes.
 
-On Nov 13, 2026, the watchlist held 5,106 boards. `all_companies.txt` is a readable copy.
+On Nov 15, 2026, the watchlist held 5,326 boards. `all_companies.txt` is a readable copy.
 
 ## Check the important boards every 5 minutes
 
-Checking all 5,106 boards every 5 minutes would mean about 1.5 million requests a day. That is more load than a personal tool should put on these services. So the finder splits the list:
+Checking all 5,326 boards every 5 minutes would mean about 1.5 million requests a day. That is more load than a personal tool should put on these services. So the finder splits the list:
 
 - The finder checks the first 300 boards every 5 minutes. Your list comes first, then the boards with the most past Simplify listings.
 - It checks every other board once every 2 hours, in 24 rotating slices. The slice comes from the clock, so a restart continues the rotation instead of starting it over.
@@ -59,6 +60,8 @@ The finder publishes each report once to the SNS topic `job-finder`. SNS deliver
 Your text replies take a longer path. The toll-free number passes each reply to the SNS topic `job-replies`, which drops it into the SQS queue `job-replies`. Between checks, the finder long-polls that queue for up to 20 seconds at a time. A queue means the server needs no open port and no web page, so nothing on the internet can reach the finder directly. The queue also keeps a reply for 14 days if the finder is down.
 
 The finder accepts a reply only when its sender is `MY_PHONE`. It deletes every message after reading it.
+
+Email replies are optional and skip AWS. With `GMAIL_APP_PASSWORD` set, report emails go out through your Gmail with `Reply-To: <you>+jobfinder@gmail.com`, and once per tick the finder reads unread mail to that alias over IMAP. It accepts only mail from your own address, keeps the text above the quoted report so the report's role numbers never count, and sends the confirmation into the same thread. Reading a message marks it read, so each reply is handled once.
 
 ## Run one Python file on one small server
 

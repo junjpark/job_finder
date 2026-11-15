@@ -1,0 +1,226 @@
+# US companies from the career-ops employer registry that the other sources missed (checked every 2 hours).
+# Employer registry by the career-ops contributors, CC BY 4.0, https://github.com/career-ops-hq/career-ops
+# Taken Nov 15, 2026. Same line format as extra_companies.txt. Move a company to extra_companies.txt to check it every 5 minutes.
+
+4SIGHT Supply Chain                      https://jobs.lever.co/4SIGHTSupplyChain
+5WPR                                     https://job-boards.greenhouse.io/5wpr
+6sense                                   https://job-boards.greenhouse.io/6sense
+A-Players                                https://job-boards.greenhouse.io/aplayers
+AbCellera                                https://job-boards.greenhouse.io/abcellera
+AccountsIQ                               https://job-boards.greenhouse.io/accountsiq
+Acquia                                   https://job-boards.greenhouse.io/acquia
+Adapture Renewables                      https://job-boards.greenhouse.io/adapturerenewables
+Adeedo!                                  https://job-boards.greenhouse.io/adeedo
+Advocates for Children of New York       https://job-boards.greenhouse.io/advocatesforchildrenofnewyork
+Affinidi                                 https://job-boards.greenhouse.io/affinidi
+Afresh                                   https://job-boards.greenhouse.io/afresh
+AfterShip                                https://job-boards.greenhouse.io/aftership
+Agile Robots SE                          https://job-boards.greenhouse.io/agilerobotsse
+Agtonomy                                 https://jobs.lever.co/agtonomy
+Airship                                  https://job-boards.greenhouse.io/airship
+Akaysha Energy                           https://job-boards.greenhouse.io/akayshaenergy
+Alkeus Pharmaceuticals                   https://job-boards.greenhouse.io/alkeus
+Allego                                   https://job-boards.greenhouse.io/allego
+Alumis                                   https://job-boards.greenhouse.io/alumis
+Amanotes                                 https://jobs.lever.co/amanotes
+Amperon                                  https://job-boards.greenhouse.io/amperon
+Amylyx Pharmaceuticals                   https://job-boards.greenhouse.io/amylyx
+Anteriad                                 https://job-boards.greenhouse.io/anteriad
+Appspace                                 https://job-boards.greenhouse.io/appspace
+Aptitude 8                               https://job-boards.greenhouse.io/aptitude8
+AssetWatch, Inc.                         https://job-boards.greenhouse.io/assetwatch
+Atrium Therapeutics                      https://jobs.lever.co/atrium-therapeutics
+Audinate                                 https://jobs.lever.co/audinate
+Automox                                  https://job-boards.greenhouse.io/automox
+Babylist                                 https://job-boards.greenhouse.io/babylist
+Backblaze                                https://job-boards.greenhouse.io/backblaze
+Barbaricum                               https://job-boards.greenhouse.io/barbaricum
+Baselane                                 https://jobs.lever.co/baselane
+BGBx                                     https://job-boards.greenhouse.io/bgbx
+BHHC                                     https://jobs.lever.co/bhhc
+Bidease                                  https://job-boards.greenhouse.io/bidease
+Bloomreach                               https://job-boards.greenhouse.io/bloomreach
+Braskem                                  https://job-boards.greenhouse.io/braskem
+Breezeway                                https://job-boards.greenhouse.io/breezeway
+Brightfield                              https://job-boards.greenhouse.io/brightfield
+Brilliant                                https://jobs.lever.co/brilliant
+BRPH                                     https://job-boards.greenhouse.io/brph
+ButcherBox                               https://job-boards.greenhouse.io/butcherbox
+Buynomics                                https://job-boards.greenhouse.io/buynomics
+BVNK                                     https://job-boards.greenhouse.io/bvnk
+CarOnSale                                https://job-boards.greenhouse.io/caronsale
+Cellanome                                https://job-boards.greenhouse.io/cellanome
+Centuria                                 https://jobs.lever.co/centuria
+CivicActions                             https://job-boards.greenhouse.io/civicactions
+CloudTen Residential                     https://job-boards.greenhouse.io/cloudten
+Coalfire                                 https://jobs.lever.co/coalfire
+commercetools                            https://job-boards.greenhouse.io/commercetools
+ConnectDER                               https://job-boards.greenhouse.io/connectder
+Contentful                               https://job-boards.greenhouse.io/contentful
+CrashPlan                                https://job-boards.greenhouse.io/crashplan
+CRED                                     https://jobs.lever.co/cred
+CrossFit                                 https://jobs.lever.co/crossfit
+Databricks                               https://job-boards.greenhouse.io/databricks
+Datadog                                  https://job-boards.greenhouse.io/datadog
+DataGrail                                https://job-boards.greenhouse.io/datagrail
+DBeaver                                  https://job-boards.greenhouse.io/dbeaver
+Deuna                                    https://jobs.lever.co/deuna
+Dialpad                                  https://job-boards.greenhouse.io/dialpad
+DigitalService GmbH des Bundes           https://job-boards.greenhouse.io/digitalservice
+Doma Technology LLC                      https://job-boards.greenhouse.io/doma
+DonorsChoose                             https://job-boards.greenhouse.io/donorschoose
+Druva                                    https://job-boards.greenhouse.io/druva
+Easybrain                                https://jobs.lever.co/easybrain
+Elastic                                  https://job-boards.greenhouse.io/elastic
+EMARKETER                                https://job-boards.greenhouse.io/emarketer
+Encore Renewable Energy                  https://jobs.lever.co/encore-renewable-energy
+Environmental Science Associates         https://job-boards.greenhouse.io/environmentalscienceassociates
+Eridan                                   https://job-boards.greenhouse.io/eridan
+EverDriven                               https://job-boards.greenhouse.io/everdriven
+Exactera                                 https://job-boards.greenhouse.io/exactera
+Faropoint                                https://job-boards.greenhouse.io/faropoint
+FlowFuse                                 https://job-boards.greenhouse.io/flowfuse
+Glance                                   https://job-boards.greenhouse.io/glance
+Gogolook                                 https://jobs.lever.co/Gogolook
+Goken America                            https://job-boards.greenhouse.io/gokenamericallc
+GoodTime                                 https://job-boards.greenhouse.io/goodtime
+Grabarz & Partner                        https://job-boards.greenhouse.io/grabarzfinanzserviceholdinggmbhcokg
+Gremlin                                  https://job-boards.greenhouse.io/gremlin
+GumGum                                   https://job-boards.greenhouse.io/gumgum
+Gushwork                                 https://jobs.lever.co/gushwork
+Harrington Orthodontics                  https://job-boards.greenhouse.io/harringtonorthodontics
+HeliosX                                  https://job-boards.greenhouse.io/heliosx
+HelloFresh                               https://job-boards.greenhouse.io/hellofresh
+Helsing                                  https://job-boards.greenhouse.io/helsing
+Hively                                   https://jobs.lever.co/Hively
+Hobaica Services                         https://job-boards.greenhouse.io/hobaica
+Immutable                                https://jobs.lever.co/immutable
+inKind                                   https://job-boards.greenhouse.io/inkind
+InMobi                                   https://job-boards.greenhouse.io/inmobi
+Inspire11                                https://job-boards.greenhouse.io/inspire11
+Integrated Biosciences                   https://job-boards.greenhouse.io/integratedbiosciencesinc
+Interdependence                          https://job-boards.greenhouse.io/interdependence
+Intradiem                                https://job-boards.greenhouse.io/intradiem
+InvestorFlow                             https://jobs.lever.co/investorflow
+Invinity Energy Systems                  https://jobs.lever.co/invinity
+Isomorphic Labs                          https://job-boards.greenhouse.io/isomorphiclabs
+iyzico                                   https://jobs.lever.co/iyzico
+Janes                                    https://job-boards.greenhouse.io/janes
+Kailera Therapeutics, Inc.               https://job-boards.greenhouse.io/kailera
+Kenora Association for Community Living  https://jobs.lever.co/kacl
+Knix                                     https://jobs.lever.co/knix
+Kyverna Therapeutics                     https://jobs.lever.co/Kyverna
+LI-COR                                   https://job-boards.greenhouse.io/licor
+Liquid Death                             https://job-boards.greenhouse.io/liquiddeath
+Localcoin                                https://job-boards.greenhouse.io/localcoin
+Loonshot Games                           https://job-boards.greenhouse.io/loonshotgames
+M9 Solutions                             https://job-boards.greenhouse.io/m9solutions
+Magnolia                                 https://job-boards.greenhouse.io/magnolia
+Medici                                   https://jobs.lever.co/medi.ci
+Medrio                                   https://job-boards.greenhouse.io/medrio
+Mejuri                                   https://job-boards.greenhouse.io/mejuri
+MG Properties                            https://job-boards.greenhouse.io/mgproperties
+Mindgrub Technologies                    https://job-boards.greenhouse.io/mindgrub
+Mindtickle                               https://jobs.lever.co/mindtickle
+Mithril                                  https://job-boards.greenhouse.io/mithril
+MixMode                                  https://job-boards.greenhouse.io/mixmode
+Mobiik                                   https://job-boards.greenhouse.io/mobiik
+MongoDB                                  https://job-boards.greenhouse.io/mongodb
+Mujin                                    https://jobs.lever.co/mujininc
+MxD                                      https://job-boards.greenhouse.io/mxd
+N26                                      https://job-boards.greenhouse.io/n26
+Neo4j                                    https://job-boards.greenhouse.io/neo4j
+NeueHealth                               https://job-boards.greenhouse.io/neuehealth
+NewLimit                                 https://job-boards.greenhouse.io/newlimit
+Nexxiot                                  https://job-boards.greenhouse.io/nexxiot
+NMI                                      https://job-boards.greenhouse.io/nmi
+Novir                                    https://jobs.lever.co/novir
+NTT DATA, Europe & LATAM, Branch in USA  https://job-boards.greenhouse.io/nttdatausa
+NuuCo Electric                           https://job-boards.greenhouse.io/nuuco
+O2EPCM, Inc.                             https://job-boards.greenhouse.io/o2epcminc
+OncoveryCare                             https://job-boards.greenhouse.io/oncoverycare
+OneTrust                                 https://job-boards.greenhouse.io/onetrust
+OpenTeams                                https://job-boards.greenhouse.io/openteams
+Orkes                                    https://job-boards.greenhouse.io/orkes
+Packmatic GmbH                           https://jobs.lever.co/Packmatic
+PADO                                     https://job-boards.greenhouse.io/pado
+Pathpoint                                https://jobs.lever.co/pathpoint
+Paytm                                    https://jobs.lever.co/paytm
+Penny Linn                               https://job-boards.greenhouse.io/pennylinn
+PhysicsX                                 https://job-boards.greenhouse.io/physicsx
+PocketHealth                             https://jobs.lever.co/PocketHealth
+Pontera                                  https://job-boards.greenhouse.io/pontera
+Praxent                                  https://job-boards.greenhouse.io/praxent
+Product People                           https://job-boards.greenhouse.io/productpeople
+Proof                                    https://jobs.lever.co/proof
+ProteinQure Inc.                         https://job-boards.greenhouse.io/proteinqureinc
+PubMatic                                 https://job-boards.greenhouse.io/pubmatic
+Pushpay                                  https://job-boards.greenhouse.io/pushpay
+Quantum Health, Inc.                     https://jobs.lever.co/quantum-health
+Raisin                                   https://job-boards.greenhouse.io/raisin
+Raptor Technologies                      https://job-boards.greenhouse.io/raptortechnologies
+Real-Time Innovations                    https://job-boards.greenhouse.io/rti
+RealSelf                                 https://jobs.lever.co/realself
+RecordPoint                              https://jobs.lever.co/recordpoint
+Recycleye                                https://job-boards.greenhouse.io/recycleye
+RepresentUs                              https://jobs.lever.co/representus
+ROUTE06                                  https://job-boards.greenhouse.io/route06
+RPA                                      https://job-boards.greenhouse.io/rpa
+Rubrik                                   https://job-boards.greenhouse.io/rubrik
+SafeBreach                               https://job-boards.greenhouse.io/safebreach
+San Francisco AIDS Foundation            https://job-boards.greenhouse.io/sfaf
+Scandit                                  https://job-boards.greenhouse.io/scandit
+Scholar Rock                             https://jobs.lever.co/scholarrock
+Science 37                               https://job-boards.greenhouse.io/science37
+Securitize                               https://job-boards.greenhouse.io/securitize
+SecurityScorecard                        https://job-boards.greenhouse.io/securityscorecard
+Septerna                                 https://job-boards.greenhouse.io/septerna
+SESAMm                                   https://job-boards.greenhouse.io/sesamm
+ShakaCode                                https://jobs.lever.co/shakacode
+ShipHawk                                 https://job-boards.greenhouse.io/shiphawk
+Sightline Media Group                    https://job-boards.greenhouse.io/sightlinemediagroup
+Smith Micro Software                     https://jobs.lever.co/smithmicro
+Sociallyin                               https://job-boards.greenhouse.io/sociallyin
+Sonatus                                  https://job-boards.greenhouse.io/sonatus
+South Shore Skin Center                  https://job-boards.greenhouse.io/southshoreskin
+Southeast Dermatology Specialists        https://job-boards.greenhouse.io/southeastdermatology
+SPS Global                               https://job-boards.greenhouse.io/sps-global
+Startale                                 https://job-boards.greenhouse.io/startale
+StockX                                   https://job-boards.greenhouse.io/stockx
+Strivacity                               https://job-boards.greenhouse.io/strivacity
+SumUp                                    https://job-boards.greenhouse.io/sumup
+Sure                                     https://jobs.lever.co/sure
+Sysdig                                   https://jobs.lever.co/sysdig
+Tandems                                  https://jobs.lever.co/tandems
+TaxValet                                 https://job-boards.greenhouse.io/taxvalet
+Tazewell Pike Animal Clinic              https://job-boards.greenhouse.io/tazewellpikeanimalclinic
+Teal Media                               https://job-boards.greenhouse.io/tealmedia
+TEECOM                                   https://jobs.lever.co/teecom
+Temus                                    https://job-boards.greenhouse.io/temus
+The Agency                               https://job-boards.greenhouse.io/theagencyre
+Third Pole Therapeutics                  https://job-boards.greenhouse.io/thirdpoleinc
+Tinybird                                 https://jobs.lever.co/tinybird
+Total Recon Auto Center                  https://job-boards.greenhouse.io/totalrecon
+Trade Republic                           https://job-boards.greenhouse.io/traderepublicbank
+Trase Systems                            https://job-boards.greenhouse.io/trase
+Trendyol                                 https://jobs.lever.co/trendyol
+trivago                                  https://job-boards.greenhouse.io/trivago
+Truecaller                               https://job-boards.greenhouse.io/truecaller
+unybrands                                https://job-boards.greenhouse.io/unybrands
+VeeFriends                               https://jobs.lever.co/VeeFriends
+Vendavo                                  https://jobs.lever.co/vendavo
+VIPdesk Connect                          https://jobs.lever.co/vipdesk
+Westside Dermatology                     https://job-boards.greenhouse.io/westsidedermatology
+WhiteTech                                https://job-boards.greenhouse.io/whitetech
+Wingspan                                 https://job-boards.greenhouse.io/wingspan
+Workhelix                                https://job-boards.greenhouse.io/workhelix
+Xometry                                  https://job-boards.greenhouse.io/xometry
+Xtillion                                 https://job-boards.greenhouse.io/xtillion
+Yousician                                https://job-boards.greenhouse.io/yousician
+Yubico                                   https://job-boards.greenhouse.io/yubico
+Yuno                                     https://jobs.lever.co/yuno
+ZenBusiness Inc.                         https://job-boards.greenhouse.io/zenbusiness
+Zenoti                                   https://job-boards.greenhouse.io/zenoti
+ZenRows                                  https://job-boards.greenhouse.io/zenrows
+Zeta                                     https://jobs.lever.co/zeta
+Çiçeksepeti                              https://jobs.lever.co/ciceksepeti

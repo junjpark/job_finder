@@ -53,3 +53,6 @@ Comcast  https://comcast.wd115.myworkdayjobs.com/Comcast_Careers
 # Startups with their own careers sites
 Retool  https://jobs.gem.com/retool
 Rippling  https://ats.rippling.com/rippling
+
+# Autonomy and robotics
+Nuro  https://job-boards.greenhouse.io/nuro

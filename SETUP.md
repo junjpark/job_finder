@@ -59,6 +59,7 @@ Environment=SNS_TOPIC_ARN=arn:aws:sns:us-east-1:ACCOUNT_ID:job-finder
 Environment=REPLY_QUEUE_URL=https://sqs.us-east-1.amazonaws.com/ACCOUNT_ID/job-replies
 Environment=MY_PHONE=+1XXXXXXXXXX
 Environment=GOOGLE_SHEET_ID=SHEET_ID
+EnvironmentFile=-/home/ubuntu/job_finder/gmail.env
 
 [Install]
 WantedBy=multi-user.target
@@ -75,3 +76,17 @@ The first run reads every board once to record what's already open (about 10 min
 ## Picking roles
 
 Each role in the text and email has a number. Reply to the text with the numbers you want (`214 219`). You'll get a confirmation, and those rows switch to **picked** in the sheet. That's where the resume step will start from.
+
+### Optional: pick by replying to the email
+
+1. Turn on 2-Step Verification for your Google account, then create an app password at myaccount.google.com/apppasswords.
+2. On the server, put it in a file only `ubuntu` can read:
+
+   ```bash
+   cd ~/job_finder && printf 'GMAIL_ADDRESS=you@gmail.com\nGMAIL_APP_PASSWORD=xxxx xxxx xxxx xxxx\n' > gmail.env && chmod 600 gmail.env
+   sudo systemctl daemon-reload && sudo systemctl restart job-finder
+   ```
+
+3. Remove the email subscription from the `job-finder` SNS topic. Report emails now come from your Gmail, so keeping it would send each report twice.
+
+Reply to a report email with the numbers you want. The finder checks every 5 minutes, ignores the quoted report, and confirms in the same thread.

@@ -18,3 +18,6 @@ __pycache__/
 
 # Resumes and postings made by /make-resumes (personal)
 resumes/
+
+# Gmail app password for email replies (server only)
+gmail.env

@@ -39,6 +39,8 @@ Each feature stays off until you set its variables. The server's values live in 
 | `SNS_TOPIC_ARN` | Reports | `arn:aws:sns:us-east-1:<account>:job-finder` |
 | `REPLY_QUEUE_URL` | Replies | `https://sqs.us-east-1.amazonaws.com/<account>/job-replies` |
 | `MY_PHONE` | Replies | Your phone in E.164 form, such as `+1XXXXXXXXXX`. The finder ignores replies from other numbers. |
+| `GMAIL_ADDRESS` | Email replies | Your Gmail. When set with the password, report emails come from and go to it with `Reply-To: <you>+jobfinder@gmail.com`, instead of through SNS. |
+| `GMAIL_APP_PASSWORD` | Email replies | A Google app password, kept in `gmail.env` (mode 600) rather than the service file. Used for sending (SMTP) and reading replies (IMAP). |
 | `GOOGLE_SHEET_ID` | Tracker sheet | Not set |
 | `GOOGLE_CREDENTIALS` | Tracker sheet | Not set. Defaults to `google_service_account.json` next to `finder.py`. |
 | `GOOGLE_SHEET_TAB` | Tracker sheet | Not set. Defaults to `Job Finder`. The finder writes only to this tab and creates it if it is missing, so it can share a spreadsheet with your own tabs. |
@@ -51,6 +53,7 @@ Reports and replies need `boto3`. The sheet needs `gspread`. The server has both
 | --- | --- | --- |
 | `finder.py` | You | The whole program. |
 | `extra_companies.txt` | You | Your list of companies, checked every tick. |
+| `career_ops_companies.txt` | Taken from the career-ops employer registry (CC BY 4.0) | US boards the other sources missed. Same line format as `extra_companies.txt`; checked every 2 hours. |
 | `watchlist.json` | `build_watchlist` | Every board to check, your list first, then by Simplify listing count. Rebuilt when older than one day. |
 | `all_companies.txt` | `build_watchlist` | A readable list of every company in the watchlist. |
 | `probed.json` | `probe_all` | Board-name guesses for each Y Combinator company and each name-only line in your list. An entry goes stale after 7 days, and each rebuild re-checks at most `PROBE_PER_DAY` stale entries. |
@@ -109,6 +112,7 @@ A `#` starts a comment. The finder skips blank lines.
 | Report text | `JobFinder: <n> new roles #<first>-<last> (<a> full-time, <b> intern). Notable: <up to 3 companies>. Reply #s for resumes, STOP to end.` At most 160 characters. |
 | Report email | The subject is `JobFinder: <n> new roles #<first>-<last>`. The body holds the report text, then one block per role with number, company, title, location, pay, and link. |
 | Reply | Any text from `MY_PHONE`. The finder reads every number in it as a role number. |
+| Email reply | An unread email to `<you>+jobfinder@gmail.com` from `GMAIL_ADDRESS`, read every 5 minutes. Only the new text counts: everything from the first quoted line (`>`, `On ... wrote:`, `From:`, `Sent from my`, or a Gmail quote block) is ignored. The confirmation comes back in the same email thread. |
 | Confirmation | `JobFinder: Picked for resumes: #<id> <company>, ...` and `. Not found: #<id>` for numbers with no role. |
 | Reply with no numbers | `JobFinder: Reply with role numbers, like 214 219. Reply STOP to opt out.` |
 

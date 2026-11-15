@@ -1,11 +1,12 @@
 """Stage 1 job finder: polls companies' own job boards (Greenhouse, Lever, Ashby,
 Workday, SmartRecruiters) and records new entry-level / intern roles in the US.
 
-The watchlist of boards comes from three places, rebuilt daily:
+The watchlist of boards comes from four places, rebuilt daily:
   1. Simplify's public listing history (every company that has posted a new-grad or intern role there)
   2. extra_companies.txt, your own list (always checked every 5 minutes)
   3. every active, public or acquired Y Combinator company, found by guessing its board name on
      Ashby, Greenhouse and Lever
+  4. career_ops_companies.txt, US boards from the career-ops employer registry (CC BY 4.0)
 all_companies.txt lists every company, yours first, then A-Z.
 
 Usage:
@@ -21,6 +22,8 @@ Optional features, each turned on by environment variables (pip install boto3 gs
                               a filter policy on the "to" attribute (see SETUP.md).
   Replies    REPLY_QUEUE_URL  Text back role numbers ("214 219") to pick them for resumes.
              MY_PHONE         Only texts from this number are accepted.
+  Email      GMAIL_ADDRESS    Email reports come from and go to this Gmail, and replying to one picks roles
+  replies    GMAIL_APP_PASSWORD  (replies go to <you>+jobfinder@gmail.com and are read every 5 minutes).
   Tracker    GOOGLE_SHEET_ID  Every role and its status go to this sheet; columns K-M are yours.
              GOOGLE_CREDENTIALS  path to the service account key (default: google_service_account.json)
 Picked roles have status 'picked' in the sheet and in state.db; the resume step reads them from there.
@@ -35,6 +38,7 @@ DB = HERE / "state.db"
 WATCHLIST = HERE / "watchlist.json"
 COMPANIES = HERE / "all_companies.txt"
 EXTRA = HERE / "extra_companies.txt"
+CAREER_OPS = HERE / "career_ops_companies.txt"  # boards from the career-ops employer registry (CC BY 4.0)
 PROBED = HERE / "probed.json"
 YC_COMPANIES = "https://yc-oss.github.io/api/companies/all.json"
 SIMPLIFY = [
@@ -53,6 +57,9 @@ PROBE_PER_DAY = 500
 SNS_TOPIC_ARN = os.environ.get("SNS_TOPIC_ARN")
 REPLY_QUEUE_URL = os.environ.get("REPLY_QUEUE_URL")
 MY_PHONE = os.environ.get("MY_PHONE")                # replies are only accepted from this number, e.g. +12065550123
+GMAIL_ADDRESS = os.environ.get("GMAIL_ADDRESS")      # email reports go through this Gmail so replies to them can be read
+GMAIL_APP_PASSWORD = os.environ.get("GMAIL_APP_PASSWORD")
+PICK_ALIAS = GMAIL_ADDRESS.replace("@", "+jobfinder@", 1) if GMAIL_ADDRESS else None  # Reply-To of every report
 GOOGLE_SHEET_ID = os.environ.get("GOOGLE_SHEET_ID")
 GOOGLE_CREDENTIALS = os.environ.get("GOOGLE_CREDENTIALS", str(HERE / "google_service_account.json"))
 GOOGLE_SHEET_TAB = os.environ.get("GOOGLE_SHEET_TAB", "Job Finder")  # its own tab, so a shared tracker's tabs stay untouched
@@ -315,12 +322,13 @@ def build_watchlist():
             if hit:
                 add_board(boards, *hit, x.get("company_name", ""), "simplify", count=1)
     extras = []
-    for line in EXTRA.read_text().splitlines() if EXTRA.exists() else []:
-        name, hit = parse_extra(line)
-        if hit:
-            add_board(boards, *hit, name or hit[1][0], "your list", priority=True)
-        elif name:
-            extras.append((name, "", []))
+    for path, source, mine in ((EXTRA, "your list", True), (CAREER_OPS, "career-ops", False)):
+        for line in path.read_text().splitlines() if path.exists() else []:
+            name, hit = parse_extra(line)
+            if hit:
+                add_board(boards, *hit, name or hit[1][0], source, priority=mine)
+            elif name and mine:
+                extras.append((name, "", []))
     yc = [(c["name"], c.get("website", ""), [c["slug"]]) for c in get_json(YC_COMPANIES)
           if c.get("status") in ("Active", "Public", "Acquired")]
     extra_names = {e[0] for e in extras}
@@ -827,11 +835,68 @@ def send_report(db, to):
     if not roles:
         return False
     short = report_text(roles)
-    sent = sns_publish(to, Subject=short.split(" (")[0][:100], Message=report_email(roles) if to == "email" else short)
+    subject, body = short.split(" (")[0][:100], report_email(roles) if to == "email" else short
+    sent = send_gmail(subject, body) if to == "email" and GMAIL_APP_PASSWORD else sns_publish(to, Subject=subject, Message=body)
     if sent:
         db.executemany(f"UPDATE roles SET {col}=1 WHERE id=?", [(r["id"],) for r in roles])
         db.commit()
     return sent
+
+
+def send_gmail(subject, body, in_reply_to=None):  # to yourself, with replies routed to PICK_ALIAS
+    import smtplib
+    from email.message import EmailMessage
+    m = EmailMessage()
+    m["From"], m["To"], m["Reply-To"], m["Subject"] = f"JobFinder <{GMAIL_ADDRESS}>", GMAIL_ADDRESS, PICK_ALIAS, subject
+    if in_reply_to:
+        m["In-Reply-To"] = m["References"] = in_reply_to
+    m.set_content(body)
+    try:
+        with smtplib.SMTP_SSL("smtp.gmail.com", 465, timeout=30) as s:
+            s.login(GMAIL_ADDRESS, GMAIL_APP_PASSWORD)
+            s.send_message(m)
+        return True
+    except Exception as e:
+        print(f"Gmail send failed: {e}", file=sys.stderr)
+        return False
+
+
+def email_reply_text(msg):
+    """The new text of a reply, without the quoted report: its role numbers must not count as picks."""
+    part = msg.get_body(("plain", "html"))
+    text = part.get_content() if part else ""
+    if part and part.get_content_type() == "text/html":
+        text = re.split(r"<div[^>]*gmail_quote|<blockquote", text, maxsplit=1)[0]
+        text = html.unescape(re.sub(r"<[^>]+>", "", re.sub(r"<br\s*/?>|</p>|</div>", "\n", text)))
+    lines, keep = text.splitlines(), []
+    for i, line in enumerate(lines):
+        s = line.strip()
+        if (s.startswith(">") or re.match(r"-+\s*Original Message|_{5,}|From:\s|Sent from my", s, re.I)
+                or (s.startswith("On ") and "wrote:" in " ".join(lines[i:i + 3]))):  # quote, or its "On ... wrote:" line
+            break
+        keep.append(line)
+    return "\n".join(keep)
+
+
+def check_email_replies(db):
+    if not (GMAIL_ADDRESS and GMAIL_APP_PASSWORD):
+        return
+    import email, imaplib
+    from email import policy
+    from email.utils import parseaddr
+    try:
+        with imaplib.IMAP4_SSL("imap.gmail.com", timeout=30) as box:
+            box.login(GMAIL_ADDRESS, GMAIL_APP_PASSWORD)
+            box.select("INBOX")
+            for num in box.search(None, "UNSEEN", "TO", f'"{PICK_ALIAS}"')[1][0].split():
+                try:
+                    msg = email.message_from_bytes(box.fetch(num, "(RFC822)")[1][0][1], policy=policy.default)  # now read
+                    if parseaddr(msg["From"] or "")[1].lower() == GMAIL_ADDRESS.lower():
+                        send_gmail(msg["Subject"] or "JobFinder", pick(db, email_reply_text(msg)), msg["Message-ID"])
+                except Exception as e:  # an unreadable reply must not block the ones behind it
+                    print(f"skipped an email reply: {e}", file=sys.stderr)
+    except Exception as e:
+        print(f"reading email replies failed: {e}", file=sys.stderr)
 
 
 def parse_reply(body):
@@ -951,8 +1016,10 @@ def main(args):
             batch = boards
         start = time.time()
         tick(db, batch, emit_existing="--emit-existing" in args)
+        check_email_replies(db)
         for to, every in REPORT_EVERY_SECONDS.items():
-            if SNS_TOPIC_ARN and (time.time() - last[to] >= every or "--once" in args) and send_report(db, to):
+            sender = SNS_TOPIC_ARN or (to == "email" and GMAIL_APP_PASSWORD)
+            if sender and (time.time() - last[to] >= every or "--once" in args) and send_report(db, to):
                 last[to] = time.time()
                 db.execute("INSERT OR REPLACE INTO meta VALUES (?, ?)", (f"last_{to}", last[to]))
                 db.commit()
@@ -1037,6 +1104,22 @@ def selftest():
     assert db.execute("SELECT id FROM roles WHERE status='picked'").fetchall() == [(2,), (4,)]
     assert pick(db, "thanks!") == "JobFinder: Reply with role numbers, like 214 219. Reply STOP to opt out."
     assert pick(db, "123456789012345678901") == pick(db, "thanks!")
+    from email.message import EmailMessage
+
+    def reply_numbers(plain=None, html_part=None):  # role numbers read from a reply, quoted report excluded
+        m = EmailMessage()
+        m.set_content(plain or html_part, subtype="plain" if plain else "html")
+        return re.findall(r"\d+", email_reply_text(m))
+    assert reply_numbers("95 101\n\nOn Thu, Nov 13, 2026 at 9:41 AM JobFinder <me@gmail.com>\nwrote:\n\n"
+                         "> JobFinder: 3 new roles #95-97\n> #95  Shield AI\n") == ["95", "101"]  # Gmail
+    assert reply_numbers("pick 96\n\nSent from my iPhone\n\n> On Nov 13, 2026, at 9:41 AM, JobFinder"
+                         " <me@gmail.com> wrote:\n> #97 X\n") == ["96"]  # Apple Mail
+    assert reply_numbers("97\n________________________________\nFrom: JobFinder <me@gmail.com>\n"
+                         "Sent: Thursday, November 13, 2026 9:41 AM\n#95") == ["97"]  # Outlook
+    assert reply_numbers(html_part='<div dir="ltr">98 and 99</div><br><div class="gmail_quote"><div class="gmail_attr">'
+                                   "On Thu, Nov 13, 2026 at 9:41 AM wrote:<br></div><blockquote>#95</blockquote></div>"
+                         ) == ["98", "99"]  # HTML only
+    assert reply_numbers("On it: 94\nthanks") == ["94"]  # "On" without "wrote:" is not a quote
     mark(db, 2, "resumes ready", "B 84 interview; A 71; D 64; benchmark C 88")
     assert db.execute("SELECT status, resumes FROM roles WHERE id=2").fetchone() == (
         "resumes ready", "B 84 interview; A 71; D 64; benchmark C 88")
@@ -1050,6 +1133,9 @@ def selftest():
     selftest_tick()
     assert slug_candidates("Scale AI", "https://scale.com") == ["scaleai", "scale-ai", "scale"]
     assert board_from_url("https://jobs.ashbyhq.com/zingage") == ("ashby", ("zingage",))
+    if CAREER_OPS.exists():  # every non-comment line must name a board the finder can read
+        bad = [l for l in CAREER_OPS.read_text().splitlines() if l.strip() and not l.startswith("#") and not parse_extra(l)[1]]
+        assert not bad, bad[:3]
     assert board_from_url("https://beli.breezy.hr/p/7faefc00059e-data-science-intern") == ("breezy", ("beli",))
     assert board_from_url("https://ats.rippling.com/riot-platforms-careers/jobs") == ("rippling", ("riot-platforms-careers",))
     assert board_from_url("https://apply.workable.com/j/ABC123") is None  # a job link without the account
@@ -1089,14 +1175,19 @@ def selftest_tick():
     assert second == ["acme: Software Engineer, New Grad"], second
     del FETCHERS["fake"]
     # email and texts each report every role once, on their own schedule
-    global sns_publish
-    real, sent = sns_publish, []
+    global sns_publish, send_gmail, GMAIL_APP_PASSWORD
+    real, real_gmail, real_password, sent = sns_publish, send_gmail, GMAIL_APP_PASSWORD, []
     sns_publish = lambda to, **kw: sent.append(to) or True
+    send_gmail = lambda subject, body, in_reply_to=None: sent.append("gmail") or True
     try:
+        GMAIL_APP_PASSWORD = None
         assert send_report(db, "email") and not send_report(db, "email")
         assert send_report(db, "sms") and not send_report(db, "sms") and sent == ["email", "sms"], sent
+        GMAIL_APP_PASSWORD = "set"  # with Gmail set up, email reports go through it so replies can be read
+        db.execute("UPDATE roles SET reported=0")
+        assert send_report(db, "email") and sent == ["email", "sms", "gmail"], sent
     finally:
-        sns_publish = real
+        sns_publish, send_gmail, GMAIL_APP_PASSWORD = real, real_gmail, real_password
 
 
 if __name__ == "__main__":
