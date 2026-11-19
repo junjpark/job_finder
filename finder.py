@@ -73,7 +73,7 @@ UA = {"User-Agent": "job-board-watcher/0.1"}
 
 LEVEL_POS = re.compile(
     r"new ?grad|(?:recent|university|college) grad|early[- ]career|entry[- ]level|university|campus|college|junior|\bjr\b"
-    r"|\b(?:engineer|developer|scientist|analyst)\s+(?:i|1)\b|\b2027\b|\bintern(?:ship)?s?\b|co-?op"
+    r"|\b(?:engineer|developer|scientist|analyst)\s+(?:i|1)\b|\b2027\b|\bintern(?:ship)?s?\b|\bco-?op\b"
     r"|apprentice|rotational|associate (?:software|data|machine|ml|ai)|early[- ]in[- ]career|\bsde\s*(?:i|1)\b"
     r"|\bgraduate (?:software|data|machine|ml|ai|engineer|developer|analyst|scientist)", re.I)
 LEVEL_NEG = re.compile(
@@ -1053,7 +1053,7 @@ def selftest():
           "Software Engineer Intern - Summer 2026", "Marketing Intern", "International Sales Engineer, Senior",
           "Cybersecurity Graduate Intern - Summer 2027", "Graduate Research Associate - Summer 2027",
           "Campus Recruiter, Technology", "University Recruiter - Engineering", "Technical Recruiter, Early Careers",
-          "Software Engineer 2"]
+          "Software Engineer 2", "Software Engineer, Cooperative AI"]
     for t in yes:
         assert title_ok(t), f"should match: {t}"
     for t in no:

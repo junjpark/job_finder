@@ -56,3 +56,6 @@ Rippling  https://ats.rippling.com/rippling
 
 # Autonomy and robotics
 Nuro  https://job-boards.greenhouse.io/nuro
+
+# AI labs
+OpenAI  https://jobs.ashbyhq.com/openai
