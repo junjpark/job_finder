@@ -25,6 +25,7 @@ Optional features, each turned on by environment variables (pip install boto3 gs
   Email      GMAIL_ADDRESS    Email reports come from and go to this Gmail, and replying to one picks roles
   replies    GMAIL_APP_PASSWORD  (replies go to <you>+jobfinder@gmail.com and are read every 5 minutes).
              REPORT_BCC       Comma-separated addresses blind-copied on report emails (not on pick confirmations).
+             FULLTIME_BCC     Same, but they get their own copy listing only full-time roles (no internships or co-ops).
   Tracker    GOOGLE_SHEET_ID  Every role and its status go to this sheet; columns K-M are yours.
              GOOGLE_CREDENTIALS  path to the service account key (default: google_service_account.json)
 Picked roles have status 'picked' in the sheet and in state.db; the resume step reads them from there.
@@ -61,6 +62,8 @@ MY_PHONE = os.environ.get("MY_PHONE")                # replies are only accepted
 GMAIL_ADDRESS = os.environ.get("GMAIL_ADDRESS")      # email reports go through this Gmail so replies to them can be read
 GMAIL_APP_PASSWORD = os.environ.get("GMAIL_APP_PASSWORD")
 REPORT_BCC = [a.strip() for a in os.environ.get("REPORT_BCC", "").split(",") if a.strip()]  # their replies never pick
+FULLTIME_BCC = [a.strip() for a in os.environ.get("FULLTIME_BCC", "").split(",") if a.strip()]
+INTERN = re.compile(r"\bintern(?:ship)?s?\b|\bco-?op\b", re.I)  # not "Internal Tools"
 PICK_ALIAS = GMAIL_ADDRESS.replace("@", "+jobfinder@", 1) if GMAIL_ADDRESS else None  # Reply-To of every report
 REPORT_ALIAS = GMAIL_ADDRESS.replace("@", "+jobreports@", 1) if GMAIL_ADDRESS else None  # To of every report, for Gmail filters
 GOOGLE_SHEET_ID = os.environ.get("GOOGLE_SHEET_ID")
@@ -801,7 +804,7 @@ def notable_first(roles):
 
 
 def report_text(roles):
-    interns = sum(bool(re.search(r"\bintern|co-?op", r["title"], re.I)) for r in roles)
+    interns = sum(bool(INTERN.search(r["title"])) for r in roles)
     names = list(dict.fromkeys(r["company"] for r in notable_first(roles)))
     ids = sorted(r["id"] for r in roles)
     span = f"#{ids[0]}" if len(ids) == 1 else f"#{ids[0]}-{ids[-1]}"
@@ -840,13 +843,16 @@ def send_report(db, to):
     short = report_text(roles)
     subject, body = short.split(" (")[0][:100], report_email(roles) if to == "email" else short
     sent = send_gmail(subject, body, bcc=REPORT_BCC) if to == "email" and GMAIL_APP_PASSWORD else sns_publish(to, Subject=subject, Message=body)
+    full_time = [r for r in roles if not INTERN.search(r["title"])]
+    if sent and to == "email" and GMAIL_APP_PASSWORD and FULLTIME_BCC and full_time:  # a separate copy, only to them
+        send_gmail(report_text(full_time).split(" (")[0][:100], report_email(full_time), recipients=FULLTIME_BCC)
     if sent:
         db.executemany(f"UPDATE roles SET {col}=1 WHERE id=?", [(r["id"],) for r in roles])
         db.commit()
     return sent
 
 
-def send_gmail(subject, body, in_reply_to=None, bcc=()):  # to REPORT_ALIAS, with replies routed to PICK_ALIAS
+def send_gmail(subject, body, in_reply_to=None, bcc=(), recipients=None):  # to REPORT_ALIAS, replies to PICK_ALIAS
     import smtplib
     from email.message import EmailMessage
     m = EmailMessage()
@@ -859,7 +865,7 @@ def send_gmail(subject, body, in_reply_to=None, bcc=()):  # to REPORT_ALIAS, wit
     try:
         with smtplib.SMTP_SSL("smtp.gmail.com", 465, timeout=30) as s:
             s.login(GMAIL_ADDRESS, GMAIL_APP_PASSWORD)
-            s.send_message(m)
+            s.send_message(m, to_addrs=recipients)  # recipients: deliver only to them, though To still names REPORT_ALIAS
         return True
     except Exception as e:
         print(f"Gmail send failed: {e}", file=sys.stderr)
@@ -1184,7 +1190,9 @@ def selftest_tick():
     global sns_publish, send_gmail, GMAIL_APP_PASSWORD
     real, real_gmail, real_password, sent = sns_publish, send_gmail, GMAIL_APP_PASSWORD, []
     sns_publish = lambda to, **kw: sent.append(to) or True
-    send_gmail = lambda subject, body, in_reply_to=None, bcc=(): sent.append(("gmail", *bcc) if bcc else "gmail") or True
+    def send_gmail(subject, body, in_reply_to=None, bcc=(), recipients=None):
+        sent.append(("only", *recipients, body.count("\n#")) if recipients else ("gmail", *bcc) if bcc else "gmail")
+        return True
     try:
         GMAIL_APP_PASSWORD = None
         assert send_report(db, "email") and not send_report(db, "email")
@@ -1195,9 +1203,13 @@ def selftest_tick():
         REPORT_BCC.append("friend@example.com")
         db.execute("UPDATE roles SET reported=0")
         assert send_report(db, "email") and sent[-1] == ("gmail", "friend@example.com"), sent
+        FULLTIME_BCC.append("pal@example.com")  # their own copy lists the new grad role, not the intern one
+        db.execute("UPDATE roles SET reported=0")
+        assert send_report(db, "email") and sent[-1] == ("only", "pal@example.com", 1), sent
     finally:
         sns_publish, send_gmail, GMAIL_APP_PASSWORD = real, real_gmail, real_password
         REPORT_BCC.clear()
+        FULLTIME_BCC.clear()
 
 
 if __name__ == "__main__":
